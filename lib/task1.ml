@@ -82,8 +82,13 @@ let solve1_for_loop min_divisors =
 
 (* 5. Работа с бесконечными последовательностями (Seq) *)
 let solve1_seq min_divisors =
-  let rec ints_from n = fun () -> Seq.Cons (n, ints_from (n + 1)) in
-  let triangles = Seq.map triangle_number (ints_from 1) in
+  (* Ленивая генерация треугольных чисел из предыдущего *)
+  let rec triangles_from prev_tri n =
+    fun () ->
+      let current_tri = prev_tri + n in
+      Seq.Cons (current_tri, triangles_from current_tri (n + 1))
+  in
+  let triangles = triangles_from 0 1 in
   let with_divisors =
     Seq.map (fun tri -> (tri, count_divisors tri)) triangles
   in
