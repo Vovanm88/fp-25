@@ -1,4 +1,4 @@
-name: Builds, tests & co
+name: Builds, tests & etc
 
 on:
   push:
