@@ -1,6 +1,0 @@
-# dune init proj lab1 .
-# OCAMLPARAM: unset
-# Shared cache: enabled-except-user-rules
-# Shared cache location: /home/vova/.cache/dune/db
-# Workspace root: /home/vova/itmo/fp/labs/fp-25
-# Auto-detected concurrency: 12

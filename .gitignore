@@ -1,7 +1,46 @@
-dist
+# OCaml/Dune build artifacts
+_build/
+*.cmi
+*.cmo
+*.cmx
+*.cma
+*.cmxa
+*.cmxs
+*.a
+*.o
+*.so
+*.exe
+*.exe.so
+*.dll
+*.dylib
+*.log
+
+# OCaml tools
+.merlin
+.ocamlformat
+.dune/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Haskell (legacy)
 dist-*
 cabal-dev
-*.o
 *.hi
 *.hie
 *.chi
