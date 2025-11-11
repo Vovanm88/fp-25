@@ -1,8 +1,12 @@
-name: Builds, tests & co
+name: Builds, tests & etc
 
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
 
 permissions: read-all
 
@@ -16,6 +20,21 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    steps:
+      - name: Checkout tree
+        uses: actions/checkout@v5
+
+      - name: Set-up OCaml
+        uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5
+
+      - run: opam install . --deps-only --with-test
+
+      - run: opam exec -- dune build
+
+  test:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
         uses: actions/checkout@v5
@@ -51,6 +70,7 @@ jobs:
         uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 5
+      - run: opam install . --deps-only
       - uses: ocaml/setup-ocaml/lint-fmt@v3
 
   lint-opam:
