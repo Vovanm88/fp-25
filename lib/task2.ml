@@ -70,6 +70,7 @@ let solve2_dp triangle =
   let result = process_row 0 in
   List.hd result
 
+(* 2. Модульная реализация *)
 let solve2_modular triangle =
   let generate_paths triangle =
     let rec gen_paths row_idx col_idx path =
@@ -95,6 +96,7 @@ let solve2_modular triangle =
 
   generate_paths triangle |> max_sum
 
+(* 3. Генерация последовательности при помощи map *)
 let solve2_map triangle =
   let rows = List.length triangle in
   let indices = List.init rows (fun i -> rows - 1 - i) in
@@ -118,6 +120,7 @@ let solve2_map triangle =
   let last_row = List.nth triangle (rows - 1) in
   build_max_sums (List.tl indices) last_row
 
+(* 4. Работа со спец. синтаксисом для циклов (for) *)
 let solve2_for_loop triangle =
   let rows = List.length triangle in
   let triangle_array = Array.of_list (List.map Array.of_list triangle) in

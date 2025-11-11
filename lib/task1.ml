@@ -31,6 +31,7 @@ let solve1_rec min_divisors =
   in
   find_triangle 1
 
+(* 2. Модульная реализация *)
 let solve1_modular min_divisors =
   let generate_triangles n =
     let rec gen acc i =
