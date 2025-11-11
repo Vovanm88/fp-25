@@ -8,4 +8,6 @@
  (name lab1)
  (synopsis "Lab 1: Project Euler problems")
  (description "Solutions to Project Euler problems 12 and 18")
- (depends ocaml))
+ (depends
+  ocaml
+  (ocamlformat :dev)))

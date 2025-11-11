@@ -5,6 +5,7 @@ description: "Solutions to Project Euler problems 12 and 18"
 depends: [
   "dune" {>= "3.20"}
   "ocaml"
+  "ocamlformat" {dev}
   "odoc" {with-doc}
 ]
 build: [
