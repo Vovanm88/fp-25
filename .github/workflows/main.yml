@@ -1,0 +1,25 @@
+name: Spell Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install yaspeller
+        run: npm install -g yaspeller
+
+      - name: Run spell check
+        run: yaspeller --file-ext ".md" .

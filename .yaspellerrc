@@ -1,0 +1,34 @@
+{
+  "lang": "ru,en",
+  "dictionary": [
+    "OPAM",
+    "ocamlopt",
+    "utop",
+    "ocaml-lint",
+    "ocamlformat",
+    "OUnit",
+    "QCheck",
+    "MP3",
+    "OCaml",
+    "ML",
+    "WAV",
+    "PCM",
+    "FFT",
+    "lsl",
+    "lsr",
+    "land",
+    "lor",
+    "Bigarray",
+    "Bytes",
+    "REPL",
+    "tldr",
+    "Lisp",
+    "Haskell",
+    "CI",
+    "fp-25"
+  ],
+  "fileExt": [".md"],
+  "ignoreText": [
+    "LICENSE"
+  ]
+}
