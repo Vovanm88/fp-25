@@ -22,4 +22,4 @@ jobs:
         run: npm install -g yaspeller
 
       - name: Run spell check
-        run: yaspeller --file-ext ".md" .
+        run: find . -name "*.md" -not -path "./.git/*" | xargs yaspeller

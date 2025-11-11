@@ -2,6 +2,7 @@
   "lang": "ru,en",
   "dictionary": [
     "OPAM",
+    "opam",
     "ocamlopt",
     "utop",
     "ocaml-lint",
@@ -25,10 +26,16 @@
     "Lisp",
     "Haskell",
     "CI",
-    "fp-25"
+    "fp-25",
+    "форматер",
+    "lint",
+    "Тестирование"
   ],
   "fileExt": [".md"],
-  "ignoreText": [
-    "LICENSE"
+  "ignoreFiles": [
+    "LICENSE",
+    ".gitignore",
+    ".yaspellerrc",
+    ".github/**/*"
   ]
 }
