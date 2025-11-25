@@ -33,7 +33,7 @@ _build/
 # OCaml tools
 .merlin
 .merlin-reason
-.ocamlformat
+
 .ocamlformat-version
 .ocamlformat-ignore
 .ocamlintit
