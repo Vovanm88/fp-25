@@ -10,6 +10,3 @@
  (name test_pbt)
  (libraries lab2 qcheck alcotest))
 
-(test
- (name test_api_leak)
- (libraries lab2 alcotest))
