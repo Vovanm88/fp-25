@@ -1,24 +1,15 @@
 (test
  (name test_unit)
- (libraries
-  lab2
-  alcotest))
+ (libraries lab2 alcotest))
 
 (test
  (name test_golden)
- (libraries
-  lab2
-  alcotest))
+ (libraries lab2 alcotest))
 
 (test
  (name test_pbt)
- (libraries
-  lab2
-  qcheck
-  alcotest))
+ (libraries lab2 qcheck alcotest))
 
 (test
  (name test_api_leak)
- (libraries
-  lab2
-  alcotest))
+ (libraries lab2 alcotest))

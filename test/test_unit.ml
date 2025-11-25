@@ -1,13 +1,12 @@
 open Alcotest
 open Lab2.Rb_set
-
 module A = Alcotest
 
 let int_cmp a b = if a < b then -1 else if a > b then 1 else 0
 
 let test_empty () =
   let s = make int_cmp in
-  A.check A.bool "empty to_list" true ((to_list s) = []);
+  A.check A.bool "empty to_list" true (to_list s = []);
   A.check A.int "empty fold_left" 0 (fold_left ( + ) 0 s)
 
 let test_add () =
@@ -107,4 +106,3 @@ let unit_tests =
   ]
 
 let () = run "Lab2 Unit Tests" [ ("rb-set", unit_tests) ]
-

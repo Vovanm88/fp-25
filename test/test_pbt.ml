@@ -3,7 +3,6 @@ open QCheck
 open Lab2.Rb_set
 
 let int_cmp a b = if a < b then -1 else if a > b then 1 else 0
-
 let gen_int_list = Gen.(list_size (int_range 0 20) (int_range (-100) 100))
 
 let gen_set =
@@ -55,48 +54,65 @@ let prop_map_identity s =
   compare s s' = 0
 
 let test_monoid_left_unit () =
-  let test = Test.make ~name:"monoid left unit" ~count:1000 arb_set prop_monoid_left_unit in
+  let test =
+    Test.make ~name:"monoid left unit" ~count:1000 arb_set prop_monoid_left_unit
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "monoid left unit property failed"
 
 let test_monoid_right_unit () =
-  let test = Test.make ~name:"monoid right unit" ~count:1000 arb_set prop_monoid_right_unit in
+  let test =
+    Test.make ~name:"monoid right unit" ~count:1000 arb_set
+      prop_monoid_right_unit
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "monoid right unit property failed"
 
 let test_monoid_associativity () =
-  let test = Test.make ~name:"monoid associativity" ~count:1000
-    (QCheck.make (Gen.triple gen_set gen_set gen_set))
-    (fun (s1, s2, s3) -> prop_monoid_assoc s1 s2 s3) in
+  let test =
+    Test.make ~name:"monoid associativity" ~count:1000
+      (QCheck.make (Gen.triple gen_set gen_set gen_set))
+      (fun (s1, s2, s3) -> prop_monoid_assoc s1 s2 s3)
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "monoid associativity property failed"
 
 let test_add_idempotent () =
-  let test = Test.make ~name:"add idempotent" ~count:1000
-    (QCheck.make (Gen.pair (Gen.int_range (-100) 100) gen_set))
-    (fun (x, s) -> prop_add_idempotent x s) in
+  let test =
+    Test.make ~name:"add idempotent" ~count:1000
+      (QCheck.make (Gen.pair (Gen.int_range (-100) 100) gen_set))
+      (fun (x, s) -> prop_add_idempotent x s)
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "add idempotent property failed"
 
 let test_append_commutative () =
-  let test = Test.make ~name:"append commutative" ~count:1000
-    (QCheck.make (Gen.pair gen_set gen_set))
-    (fun (s1, s2) -> prop_append_commutative s1 s2) in
+  let test =
+    Test.make ~name:"append commutative" ~count:1000
+      (QCheck.make (Gen.pair gen_set gen_set))
+      (fun (s1, s2) -> prop_append_commutative s1 s2)
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "append commutative property failed"
 
 let test_filter_true () =
-  let test = Test.make ~name:"filter true" ~count:1000 arb_set prop_filter_true in
+  let test =
+    Test.make ~name:"filter true" ~count:1000 arb_set prop_filter_true
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "filter true property failed"
 
 let test_filter_false () =
-  let test = Test.make ~name:"filter false" ~count:1000 arb_set prop_filter_false in
+  let test =
+    Test.make ~name:"filter false" ~count:1000 arb_set prop_filter_false
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "filter false property failed"
 
 let test_map_identity () =
-  let test = Test.make ~name:"map identity" ~count:1000 arb_set prop_map_identity in
+  let test =
+    Test.make ~name:"map identity" ~count:1000 arb_set prop_map_identity
+  in
   let result = QCheck_runner.run_tests [ test ] in
   if result <> 0 then Alcotest.fail "map identity property failed"
 
@@ -112,5 +128,5 @@ let property_tests =
     ("map identity", `Quick, test_map_identity);
   ]
 
-let () = run "Lab2 Property-Based Tests" [ ("rb-set properties", property_tests) ]
-
+let () =
+  run "Lab2 Property-Based Tests" [ ("rb-set properties", property_tests) ]

@@ -1,8 +1,5 @@
 type color = Red | Black
-
-type 'a tree =
-  | Leaf
-  | Node of color * 'a tree * 'a * 'a tree
+type 'a tree = Leaf | Node of color * 'a tree * 'a * 'a tree
 
 let blacken = function
   | Leaf -> Leaf
@@ -27,15 +24,15 @@ and balance = function
 let rec remove_min = function
   | Leaf -> (Leaf, None)
   | Node (_, Leaf, x, r) -> (r, Some x)
-  | Node (c, l, x, r) ->
+  | Node (c, l, x, r) -> (
       let l', min = remove_min l in
       match min with
       | None -> (r, Some x)
-      | Some m -> (balance (Node (c, l', x, r)), Some m)
+      | Some m -> (balance (Node (c, l', x, r)), Some m))
 
 let rec remove cmp x = function
   | Leaf -> Leaf
-  | Node (col, l, v, r) ->
+  | Node (col, l, v, r) -> (
       let comp = cmp x v in
       if comp < 0 then balance (Node (col, remove cmp x l, v, r))
       else if comp > 0 then balance (Node (col, l, v, remove cmp x r))
@@ -43,7 +40,7 @@ let rec remove cmp x = function
         match remove_min r with
         | Leaf, None -> blacken l
         | Node (_, _, _, _), None -> blacken l
-        | r', Some min -> balance (Node (col, l, min, r'))
+        | r', Some min -> balance (Node (col, l, min, r')))
 
 let rec fold_left f acc = function
   | Leaf -> acc
@@ -102,6 +99,4 @@ let compare_trees cmp t1 t2 =
   in
   compare_lists list1 list2
 
-let of_list cmp xs =
-  List.fold_left (fun acc x -> insert cmp x acc) Leaf xs
-
+let of_list cmp xs = List.fold_left (fun acc x -> insert cmp x acc) Leaf xs

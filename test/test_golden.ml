@@ -1,13 +1,14 @@
 open Alcotest
 open Lab2.Rb_set
-
 module A = Alcotest
 
 let int_cmp a b = if a < b then -1 else if a > b then 1 else 0
 
 let test_golden_operations () =
   let s = make int_cmp in
-  let s = List.fold_left (fun acc x -> add x acc) s [ 5; 3; 7; 1; 9; 2; 6; 4; 8 ] in
+  let s =
+    List.fold_left (fun acc x -> add x acc) s [ 5; 3; 7; 1; 9; 2; 6; 4; 8 ]
+  in
   let result = to_list s in
   let expected = [ 1; 2; 3; 4; 5; 6; 7; 8; 9 ] in
   A.check (list int) "golden operations insert" expected result;
@@ -78,4 +79,3 @@ let golden_tests =
   ]
 
 let () = run "Lab2 Golden Tests" [ ("rb-set", golden_tests) ]
-

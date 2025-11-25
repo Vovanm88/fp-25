@@ -1,6 +1,5 @@
 open Alcotest
 open Lab2.Rb_set
-
 module A = Alcotest
 
 let int_cmp a b = if a < b then -1 else if a > b then 1 else 0
@@ -147,8 +146,9 @@ let api_leak_tests =
     ("compare different elements", `Quick, test_compare_different_elements);
     ("order independence", `Quick, test_order_independence);
     ("fold_right api only", `Quick, test_fold_right_api_only);
-    ("encapsulation compare functions", `Quick, test_encapsulation_compare_functions);
+    ( "encapsulation compare functions",
+      `Quick,
+      test_encapsulation_compare_functions );
   ]
 
 let () = run "Lab2 API Leak Tests" [ ("rb-set api", api_leak_tests) ]
-
