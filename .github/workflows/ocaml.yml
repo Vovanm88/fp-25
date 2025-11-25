@@ -34,6 +34,7 @@ jobs:
       - run: opam exec -- dune build
 
   test:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
@@ -51,6 +52,7 @@ jobs:
       - run: opam exec -- dune runtest
 
   lint-doc:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
@@ -62,6 +64,7 @@ jobs:
       - uses: ocaml/setup-ocaml/lint-doc@v3
 
   lint-fmt:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
@@ -74,6 +77,7 @@ jobs:
       - uses: ocaml/setup-ocaml/lint-fmt@v3
 
   lint-opam:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tree
