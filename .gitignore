@@ -14,21 +14,52 @@ _build/
 *.dll
 *.dylib
 *.log
+*.byte
+*.native
+*.js
+*.js.map
+*.wasm
+*.wasm.map
+*.annot
+*.cmt
+*.cmti
+*.bak
+*.tmp
+*.orig
+*.rej
+*.pid
+*.cache
 
 # OCaml tools
 .merlin
+.merlin-reason
 .ocamlformat
+.ocamlformat-version
+.ocamlformat-ignore
+.ocamlintit
 .dune/
+.dune-workspace
+.dune-workspace.dev
+
+# Dune
+dune.lock/
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 .Python
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg
+.venv/
+venv/
+ENV/
+env/
 
 # IDE
 .vscode/
@@ -37,6 +68,50 @@ build/
 *.swo
 *~
 .DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+.cache/
+*.lock
+*.pid
+*.sock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.local
+
+# Test coverage
+_bisect/
+*.coverage
+.nyc_output/
+coverage/
+
+# Documentation
+*.html
+*.css
+doc/
 
 # Haskell (legacy)
 dist-*
@@ -60,3 +135,18 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+
+# Node.js (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Backup files
+*~
+*.bak
+*.backup
+*.old
+*.save

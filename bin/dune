@@ -1,4 +1,4 @@
 (executable
  (public_name lab2)
  (name main)
- (libraries lab2))
+ (libraries lab2 qcheck alcotest))
