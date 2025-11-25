@@ -17,6 +17,7 @@ let () =
   let s = Rb_set.add 7 s in
   let s = Rb_set.add 1 s in
   let s = Rb_set.add 9 s in
+  let s = Rb_set.add 16 s in
   
   (* Преобразуем в список и выводим *)
   let elements = Rb_set.to_list s in
