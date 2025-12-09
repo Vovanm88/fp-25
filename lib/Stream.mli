@@ -9,4 +9,3 @@ val process_stream :
   parse_line:(string -> point option) ->
   print_point:(string -> point -> unit) ->
   unit
-

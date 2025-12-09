@@ -52,7 +52,9 @@ let test_generate_points_small_step () =
   (* Check that we have at least 10 points *)
   check bool "at least 10 points" true (List.length actual >= 10);
   (* Check that first 10 points match expected *)
-  let expected = List.init 10 (fun i -> (float_of_int i *. 0.1, float_of_int i *. 0.1)) in
+  let expected =
+    List.init 10 (fun i -> (float_of_int i *. 0.1, float_of_int i *. 0.1))
+  in
   let rec take n lst =
     if n <= 0 then []
     else match lst with [] -> [] | hd :: tl -> hd :: take (n - 1) tl
@@ -60,9 +62,7 @@ let test_generate_points_small_step () =
   let first_10 = take 10 actual in
   check
     (list (pair (float 0.001) (float 0.001)))
-    "generate points with step 0.1 (first 10)"
-    expected
-    first_10
+    "generate points with step 0.1 (first 10)" expected first_10
 
 let test_generate_points_inclusive () =
   let p1 = { x = 0.0; y = 0.0 } in

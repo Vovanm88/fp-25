@@ -14,9 +14,9 @@ let lagrange_interpolate points x =
     let yi = points_list.(i).y in
     let product = ref 1.0 in
     for j = 0 to n - 1 do
-      if i <> j then (
+      if i <> j then
         let xj = points_list.(j).x in
-        product := !product *. ((x -. xj) /. (xi -. xj)))
+        product := !product *. ((x -. xj) /. (xi -. xj))
     done;
     !product *. yi
   in
@@ -42,7 +42,7 @@ let newton_interpolate points x =
   done;
   let result = ref dd.(0).(n - 1) in
   for i = n - 2 downto 0 do
-    result := !result *. (x -. points_list.(i).x) +. dd.(0).(i)
+    result := (!result *. (x -. points_list.(i).x)) +. dd.(0).(i)
   done;
   !result
 
@@ -64,4 +64,3 @@ let generate_points_inclusive p1 p2 step =
       aux (x +. step) ({ x; y } :: acc)
   in
   aux p1.x []
-

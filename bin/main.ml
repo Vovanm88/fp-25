@@ -28,7 +28,8 @@ let parse_args () =
         "N Window size for Lagrange/Newton interpolation (default: 2)" );
     ]
   in
-  Arg.parse args (fun _ -> ())
+  Arg.parse args
+    (fun _ -> ())
     "Usage: lab3 [--linear|--lagrange|--newton] [-n N] [--step STEP]";
   if !methods = [] then (
     prerr_endline "Error: at least one interpolation method must be specified";

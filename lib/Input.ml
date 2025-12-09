@@ -14,6 +14,4 @@ let parse_line line =
         let y = float_of_string (String.trim y_str) in
         Some { x; y }
     | _ -> None
-  with
-  | _ -> None
-
+  with _ -> None

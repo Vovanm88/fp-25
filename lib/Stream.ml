@@ -18,10 +18,7 @@ let interpolate method_ points x =
 
 let rec take n lst =
   if n <= 0 then []
-  else
-    match lst with
-    | [] -> []
-    | hd :: tl -> hd :: take (n - 1) tl
+  else match lst with [] -> [] | hd :: tl -> hd :: take (n - 1) tl
 
 let linspace start_x end_x step =
   let eps = 1e-8 in
@@ -50,13 +47,10 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
       match method_ with Linear -> 2 | Lagrange | Newton -> window_size
     in
     let window =
-      if method_window_size = 2 then
-        take 2 (List.rev points) |> List.rev
-      else
-        take method_window_size points
+      if method_window_size = 2 then take 2 (List.rev points) |> List.rev
+      else take method_window_size points
     in
-    if List.length window < method_window_size then
-      ()
+    if List.length window < method_window_size then ()
     else
       let start_x =
         match get_last_x method_ with
@@ -96,14 +90,13 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
     | line -> (
         match parse_line line with
         | None -> process_line ()
-        | Some point -> (
+        | Some point ->
             points_buffer := !points_buffer @ [ point ];
             if List.length !points_buffer = 1 then (
               List.iter
                 (fun method_ -> print_point (method_name method_) point)
                 methods;
-              last_computed_x :=
-                List.map (fun m -> (m, Some point.x)) methods);
+              last_computed_x := List.map (fun m -> (m, Some point.x)) methods);
             List.iter
               (fun method_ -> process_method method_ !points_buffer point)
               methods;
@@ -115,9 +108,9 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
                   | Lagrange | Newton -> max acc window_size)
                 0 methods
             in
-            if List.length !points_buffer > max_window_size then (
+            if List.length !points_buffer > max_window_size then
               points_buffer :=
-                List.rev (take max_window_size (List.rev !points_buffer)));
-            process_line ()))
+                List.rev (take max_window_size (List.rev !points_buffer));
+            process_line ())
   in
   process_line ()

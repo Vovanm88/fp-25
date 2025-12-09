@@ -10,7 +10,7 @@ let normalize_output s =
 
 let run_program input step =
   let cmd = Printf.sprintf "dune exec -- lab3 --linear --step %g" step in
-  let (ic, oc) = Unix.open_process cmd in
+  let ic, oc = Unix.open_process cmd in
   output_string oc input;
   close_out oc;
   let output = Buffer.create 1024 in
@@ -19,8 +19,7 @@ let run_program input step =
        Buffer.add_string output (input_line ic);
        Buffer.add_char output '\n'
      done
-   with
-  | End_of_file -> ());
+   with End_of_file -> ());
   ignore (Unix.close_process (ic, oc));
   normalize_output (Buffer.contents output)
 
@@ -44,10 +43,9 @@ let read_file filename =
     try
       let line = input_line ic in
       read_lines (line :: acc)
-    with
-    | End_of_file ->
-        close_in ic;
-        List.rev acc |> String.concat "\n"
+    with End_of_file ->
+      close_in ic;
+      List.rev acc |> String.concat "\n"
   in
   normalize_output (read_lines [])
 
@@ -66,8 +64,8 @@ let test_golden_2 () =
     "test/golden/test2_input.txt" "test/golden/test2_expected.txt" 0.5
 
 let test_golden_3 () =
-  test_golden "golden test 3: negative values"
-    "test/golden/test3_input.txt" "test/golden/test3_expected.txt" 0.5
+  test_golden "golden test 3: negative values" "test/golden/test3_input.txt"
+    "test/golden/test3_expected.txt" 0.5
 
 let golden_tests =
   [
@@ -77,4 +75,3 @@ let golden_tests =
   ]
 
 let () = run "Lab3 Golden" [ ("golden", golden_tests) ]
-
