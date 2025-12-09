@@ -1,3 +1,11 @@
 (test
- (name test_lab2)
- (libraries lab2 qcheck alcotest))
+ (name test_lab3)
+ (libraries lab3 alcotest))
+
+(test
+ (name test_lab3_pbt)
+ (libraries lab3 qcheck alcotest))
+
+(test
+ (name golden_test)
+ (libraries lab3 alcotest))

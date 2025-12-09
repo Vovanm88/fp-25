@@ -1,13 +1,13 @@
 (lang dune 3.20)
 
-(name lab2)
+(name lab3)
 
 (generate_opam_files true)
 
 (package
- (name lab2)
- (synopsis "Lab 2: Red-Black Tree Set implementation")
- (description "Implementation of red-black tree set data structure")
+ (name lab3)
+ (synopsis "Lab 3: Streaming interpolation")
+ (description "Streaming linear interpolation with command-line interface")
  (maintainers "vladimir melnikov")
  (authors "vladimir melnikov")
  (license "apache-2.0")

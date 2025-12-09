@@ -1,3 +1,4 @@
 (library
- (name lab2)
- (modules))
+ (public_name lab3)
+ (name lab3)
+ (modules Interpolation Generator Interpolator Pipeline Input Output))

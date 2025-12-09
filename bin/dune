@@ -1,4 +1,4 @@
 (executable
- (public_name lab2)
+ (public_name lab3)
  (name main)
- (libraries lab2))
+ (libraries lab3))

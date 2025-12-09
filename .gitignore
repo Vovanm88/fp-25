@@ -17,7 +17,7 @@ _build/
 
 # OCaml tools
 .merlin
-.ocamlformat
+
 .dune/
 
 # Python
