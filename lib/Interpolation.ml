@@ -1,15 +1,11 @@
-(* Lab 3: Interpolation methods *)
-
 type point = { x : float; y : float }
 
-(* Linear interpolation between two points *)
 let linear_interpolate p1 p2 x =
   if p1.x = p2.x then p1.y
   else
     let t = (x -. p1.x) /. (p2.x -. p1.x) in
     p1.y +. (t *. (p2.y -. p1.y))
 
-(* Lagrange interpolation for n points *)
 let lagrange_interpolate points x =
   let n = List.length points in
   let points_list = Array.of_list points in
@@ -30,17 +26,13 @@ let lagrange_interpolate points x =
   done;
   !sum
 
-(* Newton interpolation using divided differences *)
 let newton_interpolate points x =
   let n = List.length points in
   let points_list = Array.of_list points in
-  (* Compute divided differences *)
   let dd = Array.make_matrix n n 0.0 in
-  (* Initialize with y values *)
   for i = 0 to n - 1 do
     dd.(i).(0) <- points_list.(i).y
   done;
-  (* Compute divided differences *)
   for j = 1 to n - 1 do
     for i = 0 to n - j - 1 do
       let xi = points_list.(i).x in
@@ -48,14 +40,12 @@ let newton_interpolate points x =
       dd.(i).(j) <- (dd.(i + 1).(j - 1) -. dd.(i).(j - 1)) /. (xij -. xi)
     done
   done;
-  (* Evaluate polynomial using Horner's method *)
   let result = ref dd.(0).(n - 1) in
   for i = n - 2 downto 0 do
     result := !result *. (x -. points_list.(i).x) +. dd.(0).(i)
   done;
   !result
 
-(* Generate interpolated points for a segment [p1, p2) with given step *)
 let generate_points p1 p2 step =
   let rec aux x acc =
     if x >= p2.x then List.rev acc
@@ -65,7 +55,6 @@ let generate_points p1 p2 step =
   in
   aux p1.x []
 
-(* Generate points for the last segment [p1, p2] including the endpoint *)
 let generate_points_inclusive p1 p2 step =
   let rec aux x acc =
     if x > p2.x then List.rev acc

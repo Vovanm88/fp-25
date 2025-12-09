@@ -1,4 +1,4 @@
 (library
  (public_name lab3)
  (name lab3)
- (modules Interpolation Generator Interpolator Pipeline Input Output))
+ (modules Interpolation Stream Input Output))

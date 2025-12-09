@@ -1,14 +1,14 @@
-(* Lab 3: Main entry point *)
-
 open Lab3
 
-type method_type = Interpolator.method_type = Linear | Lagrange | Newton
+type interpolation_method = Stream.interpolation_method =
+  | Linear
+  | Lagrange
+  | Newton
 
-(* Parse command-line arguments *)
 let parse_args () =
   let step = ref 1.0 in
   let methods = ref [] in
-  let window_size = ref 4 in
+  let window_size = ref 2 in
   let args =
     [
       ( "--step",
@@ -25,7 +25,7 @@ let parse_args () =
         " Use Newton interpolation" );
       ( "-n",
         Arg.Set_int window_size,
-        "N Window size for Lagrange/Newton interpolation (default: 4)" );
+        "N Window size for Lagrange/Newton interpolation (default: 2)" );
     ]
   in
   Arg.parse args (fun _ -> ())
@@ -37,5 +37,5 @@ let parse_args () =
 
 let () =
   let methods, step, window_size = parse_args () in
-  Pipeline.run ~methods ~step ~window_size ~parse_line:Input.parse_line
-    ~output:Output.print_point
+  Stream.process_stream ~methods ~step ~window_size ~parse_line:Input.parse_line
+    ~print_point:Output.print_point

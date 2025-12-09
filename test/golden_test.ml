@@ -8,20 +8,8 @@ let normalize_output s =
   |> List.filter (fun s -> s <> "")
   |> String.concat "\n"
 
-let project_root =
-  let rec find_root dir =
-    if Sys.file_exists (Filename.concat dir "dune-project") then dir
-    else
-      let parent = Filename.dirname dir in
-      if parent = dir then failwith "Could not find project root"
-      else find_root parent
-  in
-  find_root (Sys.getcwd ())
-
 let run_program input step =
-  (* Use direct path to built executable *)
-  let exe = Filename.concat project_root "_build/default/bin/main.exe" in
-  let cmd = Printf.sprintf "%s --linear --step %g" exe step in
+  let cmd = Printf.sprintf "dune exec -- lab3 --linear --step %g" step in
   let (ic, oc) = Unix.open_process cmd in
   output_string oc input;
   close_out oc;
@@ -35,6 +23,16 @@ let run_program input step =
   | End_of_file -> ());
   ignore (Unix.close_process (ic, oc));
   normalize_output (Buffer.contents output)
+
+let project_root =
+  let rec find_root dir =
+    if Sys.file_exists (Filename.concat dir "dune-project") then dir
+    else
+      let parent = Filename.dirname dir in
+      if parent = dir then failwith "Could not find project root"
+      else find_root parent
+  in
+  find_root (Sys.getcwd ())
 
 let read_file filename =
   let filename =
@@ -79,3 +77,4 @@ let golden_tests =
   ]
 
 let () = run "Lab3 Golden" [ ("golden", golden_tests) ]
+
