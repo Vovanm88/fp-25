@@ -1,4 +1,0 @@
-(library
- (name lab2)
- (modules rb_set rb_set_impl)
- (public_name lab2))
