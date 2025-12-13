@@ -36,23 +36,43 @@ let write_string s =
   let bytes = List.init len (fun i -> Char.code (String.get s i)) in
   write_int32 len @ bytes
 
-(* Write list of int32 *)
+(* Write list of int32 - optimized: build in reverse, then reverse once *)
 let write_list_int32 lst =
-  let len_bytes = write_int32 (List.length lst) in
-  let data_bytes = List.concat (List.map write_int32 lst) in
+  let len = List.length lst in
+  let len_bytes = write_int32 len in
+  let arr = Array.of_list lst in
+  (* Build bytes in correct order using fold_right *)
+  let data_bytes = Array.fold_right (fun value acc -> 
+    let bytes = write_int32 value in
+    bytes @ acc
+  ) arr [] in
   len_bytes @ data_bytes
 
-(* Write list of float *)
+(* Write list of float - optimized: build in reverse, then reverse once *)
 let write_list_float lst =
-  let len_bytes = write_int32 (List.length lst) in
-  let data_bytes = List.concat (List.map write_float lst) in
+  let len = List.length lst in
+  let len_bytes = write_int32 len in
+  let arr = Array.of_list lst in
+  (* Build bytes in correct order using fold_right *)
+  let data_bytes = Array.fold_right (fun value acc -> 
+    let bytes = write_float value in
+    bytes @ acc
+  ) arr [] in
   len_bytes @ data_bytes
 
-(* Write bytes to file *)
+(* Write list of uint8 - optimized: direct conversion *)
+let write_list_uint8 lst =
+  let len = List.length lst in
+  let len_bytes = write_int32 len in
+  (* uint8 is just one byte, so we can convert directly *)
+  len_bytes @ lst
+
+(* Write bytes to file - optimized with Array *)
 let write_bytes_to_file filename bytes =
   let oc = open_out_bin filename in
   try
-    List.iter (output_byte oc) bytes;
+    let arr = Array.of_list bytes in
+    Array.iter (output_byte oc) arr;
     close_out oc
   with
   | e ->

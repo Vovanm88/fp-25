@@ -78,6 +78,60 @@ let overlap_add_windows windows =
         take len result
       | _ -> result
 
+(* Dequantize data first if quantized *)
+let dequantize_segments segments =
+  List.map (fun seg ->
+    match seg.Audiomodel.quantized_data with
+    | None -> seg  (* No quantized data, data is in raw_data already *)
+    | Some quantized_bands ->
+      (* Check that we have matching counts and non-empty data *)
+      let num_bands = List.length quantized_bands in
+      let num_levels = List.length seg.Audiomodel.quantization_levels in
+      let num_ranges = List.length seg.Audiomodel.band_ranges in
+      if num_bands = 0 || num_levels = 0 || num_ranges = 0 then
+        (* Empty data - return segment as-is *)
+        seg
+      else if num_bands <> num_levels || num_bands <> num_ranges then
+        (* Mismatch - skip dequantization, return segment as-is *)
+        seg
+      else
+        (* Dequantize each band, skipping invalid quantization levels *)
+        let dequantized_bands = 
+          let rec dequantize_all quant_bands quant_levels ranges acc =
+            match quant_bands, quant_levels, ranges with
+            | [], [], [] -> List.rev acc
+            | [], _, _ -> List.rev acc  (* quant_bands exhausted *)
+            | _, [], _ -> List.rev acc  (* quant_levels exhausted *)
+            | _, _, [] -> List.rev acc  (* ranges exhausted *)
+            | qb :: qbs, ql :: qls, (min_val, max_val) :: rs ->
+              (* Check quantization level is valid before calling dequantize *)
+              if ql <= 0 then
+                (* Invalid quantization level - skip this band *)
+                dequantize_all qbs qls rs ([] :: acc)
+              else
+                try
+                  let deq = Quantization.dequantize qb ql min_val max_val in
+                  dequantize_all qbs qls rs (deq :: acc)
+                with
+                | Failure _ ->
+                  (* Quantization error - skip this band *)
+                  dequantize_all qbs qls rs ([] :: acc)
+          in
+          dequantize_all quantized_bands seg.Audiomodel.quantization_levels seg.Audiomodel.band_ranges []
+        in
+      (* Update segment with dequantized data in raw_data *)
+      {
+        seg with
+        Audiomodel.raw_data = Some dequantized_bands;
+        quantized_data = None;  (* Clear quantized data *)
+        window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
+        frequency_bands = seg.Audiomodel.frequency_bands;  (* Preserve for merge_frequency_bands *)
+      }
+  ) segments
+
 (* Apply IMDCT Level 2 to each band (reverse of MDCT Level 2) *)
 let apply_imdct_level2 segments =
   List.map (fun seg ->
@@ -90,8 +144,12 @@ let apply_imdct_level2 segments =
       {
         seg with
         Audiomodel.raw_data = Some time_domain_bands;
-        (* Preserve window_data for merge_frequency_bands *)
+        (* Preserve all fields for merge_frequency_bands *)
         window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
+        frequency_bands = seg.Audiomodel.frequency_bands;
       }
   ) segments
 
@@ -107,8 +165,12 @@ let apply_mdct_level1_to_bands segments =
       {
         seg with
         Audiomodel.raw_data = Some mdct_level1_bands;
-        (* Preserve window_data for merge_frequency_bands *)
+        (* Preserve all fields for merge_frequency_bands *)
         window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
+        frequency_bands = seg.Audiomodel.frequency_bands;
       }
   ) segments
 
@@ -120,57 +182,15 @@ let merge_frequency_bands segments =
     | Some bands, freq_bands when List.length bands = List.length freq_bands ->
       (* Reconstruct original MDCT coefficient array by merging bands *)
       (* We need to determine the original number of MDCT coefficients *)
-      (* Method 1: If we have window_data, MDCT output size = window_size / 2 *)
+      (* Calculate MDCT output size from window_type (window_size / 2) *)
       let num_coeffs = match seg.Audiomodel.window_data with
       | Some window_data -> 
         (* MDCT transforms n samples into n/2 coefficients *)
         List.length window_data / 2
       | None ->
-        (* Method 2: Find num_coeffs by checking which value makes all bands fit correctly *)
-        (* For each band with (start_freq, end_freq) and size N: *)
-        (* start_idx = int_of_float (start_freq * num_coeffs) *)
-        (* end_idx = int_of_float (end_freq * num_coeffs) *)
-        (* N should equal end_idx - start_idx + 1 *)
-        let total_band_size = List.fold_left (fun acc band -> acc + List.length band) 0 bands in
-        (* Start with minimum estimate based on total band size *)
-        let min_estimate = total_band_size in
-        (* Also try estimates from individual bands *)
-        let band_estimates = List.map2 (fun band (start_freq, end_freq) ->
-          let band_size = float_of_int (List.length band) in
-          let freq_range = end_freq -. start_freq in
-          if freq_range > 0.001 then  (* Avoid division by zero *)
-            int_of_float (band_size /. freq_range)
-          else
-            List.length band
-        ) bands freq_bands in
-        let max_band_estimate = List.fold_left max 0 band_estimates in
-        let start_estimate = max min_estimate max_band_estimate in
-        (* Find the smallest num_coeffs that makes all bands fit correctly *)
-        (* Optimize: use binary search or limit iterations *)
-        (* Since window_data should always be available, this should rarely be called *)
-        (* But if it is, we'll use a smarter approach: try only likely candidates *)
-        let rec find_correct_num_coeffs candidate iterations =
-          if iterations > 1000 then 
-            (* Limit iterations to avoid slow performance *)
-            (* Fallback: use maximum estimate if search fails *)
-            max_band_estimate
-          else if candidate > 100000 then 
-            max_band_estimate
-          else
-            (* Check if this candidate works for all bands *)
-            let all_match = try
-              List.for_all2 (fun band (start_freq, end_freq) ->
-                let start_idx = int_of_float (start_freq *. float_of_int candidate) in
-                let end_idx = min (candidate - 1) (int_of_float (end_freq *. float_of_int candidate)) in
-                let expected_size = end_idx - start_idx + 1 in
-                expected_size = List.length band
-              ) bands freq_bands
-            with _ -> false
-            in
-            if all_match then candidate
-            else find_correct_num_coeffs (candidate + 1) (iterations + 1)
-        in
-        find_correct_num_coeffs start_estimate 0
+        (* Calculate from window_type - this is the preferred method to save space *)
+        (* window_data is no longer saved, so we always use window_type *)
+        Audiomodel.get_window_size seg.Audiomodel.window_type / 2
       in
       
       let merged = Array.make num_coeffs 0.0 in
@@ -183,7 +203,7 @@ let merge_frequency_bands segments =
         (* Place band coefficients at correct positions *)
         List.iteri (fun i coeff ->
           let pos = start_idx + i in
-          if pos <= end_idx && pos < num_coeffs then
+          if pos >= 0 && pos < num_coeffs && pos <= end_idx then
             merged.(pos) <- coeff
         ) band
       ) bands freq_bands;
@@ -194,8 +214,11 @@ let merge_frequency_bands segments =
         Audiomodel.raw_data = Some [Array.to_list merged];
         num_bands = 1;
         frequency_bands = [];
-        (* Preserve window_data (it's already there from encoder) *)
+        (* Preserve window_data, start_sample, end_sample, original_length (it's already there from encoder) *)
         window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
       }
     | _ -> seg  (* Mismatch, skip *)
   ) segments
@@ -213,6 +236,9 @@ let apply_imdct_final segments =
         seg with
         Audiomodel.window_data = Some window_data;
         Audiomodel.raw_data = None;  (* Clear raw_data as we now have window_data *)
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
       }
     | Some _ -> seg  (* Unexpected format *)
   ) segments
@@ -239,9 +265,11 @@ let decode_from_file input_file =
   let (segments, sample_rate, compression_params, _original_length) = read_audio_file audio_file in
   
   (* Full decoder pipeline: reverse of encoder *)
-  (* segments have second-level MDCT coefficients in raw_data *)
+  (* segments have quantized second-level MDCT coefficients *)
+  (* Step 0: Dequantize data *)
+  let dequantized_segments = dequantize_segments segments in
   (* Step 1: IMDCT Level 2 *)
-  let imdct2_segments = apply_imdct_level2 segments in
+  let imdct2_segments = apply_imdct_level2 dequantized_segments in
   (* Step 2: MDCT Level 1 to bands *)
   let mdct1_segments = apply_mdct_level1_to_bands imdct2_segments in
   (* Step 3: Merge frequency bands *)

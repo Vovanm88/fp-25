@@ -29,6 +29,11 @@ val pass_through_silence : float list -> float list
 (* Returns: reconstructed signal *)
 val overlap_add_windows : Audiomodel.segment list -> float list
 
+(* Dequantize segments (convert quantized_data to raw_data) *)
+(* segments: list of segments with quantized_data *)
+(* Returns: list of segments with raw_data (dequantized) and quantized_data cleared *)
+val dequantize_segments : Audiomodel.segment list -> Audiomodel.segment list
+
 (* Apply IMDCT Level 2 to each band (reverse of MDCT Level 2) *)
 (* segments: list of segments with second-level MDCT coefficients in raw_data *)
 (* Returns: list of segments with time-domain bands *)

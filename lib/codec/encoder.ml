@@ -174,8 +174,11 @@ let split_frequency_bands ?(frequency_boundaries_hz = Audiomodel.standard_10band
           Audiomodel.raw_data = Some valid_bands;
           num_bands = List.length valid_bands;
           frequency_bands = valid_band_pairs;
-          (* Preserve window_data for decoder *)
+          (* Preserve window_data, start_sample, end_sample, original_length for decoder *)
           window_data = seg.Audiomodel.window_data;
+          start_sample = seg.Audiomodel.start_sample;
+          end_sample = seg.Audiomodel.end_sample;
+          original_length = seg.Audiomodel.original_length;
         }
     | Some _ -> seg  (* Already split or unexpected format *)
   ) segments
@@ -192,8 +195,11 @@ let apply_imdct_to_bands segments =
       {
         seg with
         Audiomodel.raw_data = Some time_domain_bands;
-        (* Preserve window_data for decoder *)
+        (* Preserve window_data, start_sample, end_sample, original_length for decoder *)
         window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
       }
   ) segments
 
@@ -209,39 +215,52 @@ let apply_mdct_level2 segments =
       {
         seg with
         Audiomodel.raw_data = Some mdct_level2_bands;
-        (* Preserve window_data for decoder *)
+        (* Preserve window_data, start_sample, end_sample, original_length for decoder *)
         window_data = seg.Audiomodel.window_data;
+        start_sample = seg.Audiomodel.start_sample;
+        end_sample = seg.Audiomodel.end_sample;
+        original_length = seg.Audiomodel.original_length;
       }
   ) segments
 
-(* Select quantization thresholds for each band based on acceptable noise level *)
+(* Select quantization thresholds and quantize data *)
 let select_quantization_thresholds ?(snr_threshold_db = 40.0) segments =
   List.map (fun seg ->
     match seg.Audiomodel.raw_data with
     | None -> seg  (* No band data, skip *)
     | Some mdct_level2_bands ->
-      (* For each band, find optimal quantization level *)
-      let quantization_levels = List.map (fun band_coeffs ->
-        let n, _min_val, _max_val = Audiomodel.find_optimal_quantization 
+      (* For each band, find optimal quantization level and quantize *)
+      let results = List.map (fun band_coeffs ->
+        let n, min_val, max_val = Audiomodel.find_optimal_quantization 
           ~snr_threshold:snr_threshold_db band_coeffs in
-        n
+        (* Actually quantize the data *)
+        let quantized = Quantization.quantize ~min_val ~max_val band_coeffs n in
+        (n, (min_val, max_val), quantized)
       ) mdct_level2_bands in
       
-      (* Calculate band_ranges (min, max) for each band *)
-      let band_ranges = List.map (fun band_coeffs ->
-        let min_val = List.fold_left min Float.infinity band_coeffs in
-        let max_val = List.fold_left max Float.neg_infinity band_coeffs in
-        (min_val, max_val)
-      ) mdct_level2_bands in
-      
-      (* Update segment with quantization information, preserving window_data *)
-      {
-        seg with
-        quantization_levels;
-        band_ranges;
-        (* Preserve window_data for decoder *)
-        window_data = seg.Audiomodel.window_data;
-      }
+      (* Filter out any results with invalid quantization levels (n <= 0) *)
+      let valid_results = List.filter (fun (n, _, _) -> n > 0) results in
+      if List.length valid_results = 0 then
+        (* No valid quantization - return segment as-is *)
+        seg
+      else
+        let quantization_levels = List.map (fun (n, _, _) -> n) valid_results in
+        let band_ranges = List.map (fun (_, range, _) -> range) valid_results in
+        let quantized_data = List.map (fun (_, _, q) -> q) valid_results in
+        
+        (* Update segment with quantized data, clear raw_data to save space *)
+        {
+          seg with
+          quantization_levels;
+          band_ranges;
+          quantized_data = Some quantized_data;
+          raw_data = None;  (* Clear raw data - we have quantized now *)
+          (* Preserve window_data, start_sample, end_sample, original_length for decoder *)
+          window_data = seg.Audiomodel.window_data;
+          start_sample = seg.Audiomodel.start_sample;
+          end_sample = seg.Audiomodel.end_sample;
+          original_length = seg.Audiomodel.original_length;
+        }
   ) segments
 
 (* Create AudioFile structure from encoded segments *)

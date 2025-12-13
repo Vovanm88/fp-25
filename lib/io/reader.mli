@@ -1,5 +1,17 @@
 (* File reader interface *)
 
+(* Array conversion helpers for efficient reading *)
+val list_to_array : int list -> int array * int
+val array_to_list : int array * int -> int list
+
+(* Array-based reading functions for performance *)
+val read_int32_array : int array * int -> int * (int array * int)
+val read_uint8_array : int array * int -> int * (int array * int)
+val read_float_array : int array * int -> float * (int array * int)
+val read_list_int32_array : int array * int -> int list * (int array * int)
+val read_list_uint8_array : int array * int -> int list * (int array * int)
+val read_list_float_array : int array * int -> float list * (int array * int)
+
 (* Read int32 from little-endian bytes *)
 (* Returns (value, remaining_bytes) *)
 val read_int32 : int list -> int * int list
@@ -27,6 +39,10 @@ val read_list_int32 : int list -> int list * int list
 (* Read list of float *)
 (* Returns (value, remaining_bytes) *)
 val read_list_float : int list -> float list * int list
+
+(* Read list of uint8 *)
+(* Returns (value, remaining_bytes) *)
+val read_list_uint8 : int list -> int list * int list
 
 (* Read all bytes from file *)
 val read_bytes_from_file : string -> int list

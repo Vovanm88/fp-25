@@ -1,0 +1,5 @@
+(executable
+ (name profile_decoder)
+ (modes byte)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities unix)
+ (ocamlc_flags (:standard -p)))

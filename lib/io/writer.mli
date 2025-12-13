@@ -21,6 +21,9 @@ val write_list_int32 : int list -> int list
 (* Write list of float *)
 val write_list_float : float list -> int list
 
+(* Write list of uint8 *)
+val write_list_uint8 : int list -> int list
+
 (* Write bytes to file *)
 val write_bytes_to_file : string -> int list -> unit
 

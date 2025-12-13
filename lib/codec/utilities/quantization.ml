@@ -148,37 +148,30 @@ let decode_quantized_indices bytes num_elements n =
   else if List.length bytes = 0 then []
   else
     let bit_width = calculate_bit_width n in
-    (* Convert bytes to bit stream (list of bools, LSB first per byte, bytes in order) *)
-    let bits = List.fold_left
-      (fun acc byte ->
-        let rec byte_to_bits b pos =
-          if pos >= 8 then []
-          else ((b land (1 lsl pos)) <> 0) :: byte_to_bits b (pos + 1)
-        in
-        acc @ byte_to_bits byte 0)
-      []
-      bytes
-    in
-    (* Extract indices from bit stream *)
-    let rec extract_indices acc remaining_bits count =
-      if count = 0 then List.rev acc
-      else if List.length remaining_bits < bit_width then
-        (* Not enough bits, return what we have *)
-        List.rev acc
-      else
-        (* Extract bit_width bits *)
-        let rec bits_to_index bits_left acc_idx = function
-          | [] -> (acc_idx, [])
-          | b :: rest when bits_left > 0 ->
-            let bit_val = if b then 1 else 0 in
-            let new_acc = acc_idx lor (bit_val lsl (bit_width - bits_left)) in
-            bits_to_index (bits_left - 1) new_acc rest
-          | rest -> (acc_idx, rest)
-        in
-        let (index, remaining) = bits_to_index bit_width 0 remaining_bits in
+    (* Convert bytes to bit stream using Array for O(1) access *)
+    let bytes_arr = Array.of_list bytes in
+    let num_bytes = Array.length bytes_arr in
+    let total_bits = num_bytes * 8 in
+    let bits_arr = Array.make total_bits false in
+    (* Fill bits array *)
+    for byte_idx = 0 to num_bytes - 1 do
+      let byte = bytes_arr.(byte_idx) in
+      for bit_pos = 0 to 7 do
+        bits_arr.(byte_idx * 8 + bit_pos) <- (byte land (1 lsl bit_pos)) <> 0
+      done
+    done;
+    (* Extract indices directly from bit array *)
+    let result = Array.make num_elements 0 in
+    for elem_idx = 0 to num_elements - 1 do
+      let bit_offset = elem_idx * bit_width in
+      if bit_offset + bit_width <= total_bits then
+        let index = ref 0 in
+        for bit_idx = 0 to bit_width - 1 do
+          if bits_arr.(bit_offset + bit_idx) then
+            index := !index lor (1 lsl bit_idx)
+        done;
         (* Clamp index to valid range *)
-        let clamped_index = min (n - 1) (max 0 index) in
-        extract_indices (clamped_index :: acc) remaining (count - 1)
-    in
-    extract_indices [] bits num_elements
+        result.(elem_idx) <- min (n - 1) (max 0 !index)
+    done;
+    Array.to_list result
 

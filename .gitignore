@@ -64,6 +64,7 @@ env/
 # IDE
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 *~
@@ -87,6 +88,7 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Temporary files
+converted_audio/
 *.tmp
 *.temp
 *.log

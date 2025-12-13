@@ -46,12 +46,13 @@ let extract_mono samples num_channels =
     in
     extract [] 0 samples
 
-(* Helper to limit samples for testing *)
+(* Helper to limit samples for testing - O(n) instead of O(n²) *)
 let limit_samples samples max_samples =
-  if List.length samples > max_samples then
-    List.init max_samples (fun i -> List.nth samples i)
-  else
-    samples
+  let rec take n acc = function
+    | [] -> List.rev acc
+    | x :: xs -> if n <= 0 then List.rev acc else take (n - 1) (x :: acc) xs
+  in
+  take max_samples [] samples
 
 (* Test compression with high quality (SNR threshold = 60 dB) *)
 let test_compression_high_quality () =
@@ -89,10 +90,14 @@ let test_compression_high_quality () =
     check int "Decoded sample rate matches" decoded_sample_rate sample_rate;
     check bool "Decoded signal is not empty" (List.length reconstructed > 0) true;
     
-    (* Calculate SNR *)
+    (* Calculate SNR - O(n) instead of O(n²) *)
     let min_len = min (List.length test_samples) (List.length reconstructed) in
-    let input_trimmed = List.init min_len (fun i -> List.nth test_samples i) in
-    let reconstructed_trimmed = List.init min_len (fun i -> List.nth reconstructed i) in
+    let rec take n acc = function
+      | [] -> List.rev acc
+      | x :: xs -> if n <= 0 then List.rev acc else take (n - 1) (x :: acc) xs
+    in
+    let input_trimmed = take min_len [] test_samples in
+    let reconstructed_trimmed = take min_len [] reconstructed in
     let snr = Dsp.snr input_trimmed reconstructed_trimmed in
     
     Printf.printf "Reconstructed samples: %d\n" (List.length reconstructed);
@@ -159,10 +164,14 @@ let test_compression_medium_quality () =
     check int "Decoded sample rate matches" decoded_sample_rate sample_rate;
     check bool "Decoded signal is not empty" (List.length reconstructed > 0) true;
     
-    (* Calculate SNR *)
+    (* Calculate SNR - O(n) instead of O(n²) *)
     let min_len = min (List.length test_samples) (List.length reconstructed) in
-    let input_trimmed = List.init min_len (fun i -> List.nth test_samples i) in
-    let reconstructed_trimmed = List.init min_len (fun i -> List.nth reconstructed i) in
+    let rec take n acc = function
+      | [] -> List.rev acc
+      | x :: xs -> if n <= 0 then List.rev acc else take (n - 1) (x :: acc) xs
+    in
+    let input_trimmed = take min_len [] test_samples in
+    let reconstructed_trimmed = take min_len [] reconstructed in
     let snr = Dsp.snr input_trimmed reconstructed_trimmed in
     
     Printf.printf "Reconstructed samples: %d\n" (List.length reconstructed);
@@ -229,10 +238,14 @@ let test_compression_low_quality () =
     check int "Decoded sample rate matches" decoded_sample_rate sample_rate;
     check bool "Decoded signal is not empty" (List.length reconstructed > 0) true;
     
-    (* Calculate SNR *)
+    (* Calculate SNR - O(n) instead of O(n²) *)
     let min_len = min (List.length test_samples) (List.length reconstructed) in
-    let input_trimmed = List.init min_len (fun i -> List.nth test_samples i) in
-    let reconstructed_trimmed = List.init min_len (fun i -> List.nth reconstructed i) in
+    let rec take n acc = function
+      | [] -> List.rev acc
+      | x :: xs -> if n <= 0 then List.rev acc else take (n - 1) (x :: acc) xs
+    in
+    let input_trimmed = take min_len [] test_samples in
+    let reconstructed_trimmed = take min_len [] reconstructed in
     let snr = Dsp.snr input_trimmed reconstructed_trimmed in
     
     Printf.printf "Reconstructed samples: %d\n" (List.length reconstructed);
@@ -300,10 +313,14 @@ let test_compression_full_wav () =
     check int "Decoded sample rate matches" decoded_sample_rate sample_rate;
     check bool "Decoded signal is not empty" (List.length reconstructed > 0) true;
     
-    (* Calculate SNR *)
+    (* Calculate SNR - O(n) instead of O(n²) *)
     let min_len = min (List.length test_samples) (List.length reconstructed) in
-    let input_trimmed = List.init min_len (fun i -> List.nth test_samples i) in
-    let reconstructed_trimmed = List.init min_len (fun i -> List.nth reconstructed i) in
+    let rec take n acc = function
+      | [] -> List.rev acc
+      | x :: xs -> if n <= 0 then List.rev acc else take (n - 1) (x :: acc) xs
+    in
+    let input_trimmed = take min_len [] test_samples in
+    let reconstructed_trimmed = take min_len [] reconstructed in
     let snr = Dsp.snr input_trimmed reconstructed_trimmed in
     
     Printf.printf "Reconstructed samples: %d\n" (List.length reconstructed);

@@ -30,7 +30,30 @@
  (name test_golden_wav)
  (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
 
-(test
- (name test_e2e_simple)
- (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
+(executable
+ (name convert_wav)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav unix))
 
+(executable
+ (name profile_encoder)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities unix))
+
+(executable
+ (name profile_full)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities unix))
+
+(executable
+ (name profile_decoder)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities unix))
+
+(executable
+ (name test_compression_size)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav unix))
+
+(test
+ (name test_quantization_pipeline)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities alcotest))
+
+(test
+ (name test_serialization_simple)
+ (libraries lab4_mlac.io alcotest))

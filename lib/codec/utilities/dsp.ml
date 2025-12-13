@@ -119,10 +119,15 @@ let idft_transform data =
 (* FFT Shift: Shift zero frequency to center *)
 let fft_shift data =
   let n = List.length data in
-  let mid = n / 2 in
-  let first_half = List.init mid (fun i -> List.nth data i) in
-  let second_half = List.init (n - mid) (fun i -> List.nth data (mid + i)) in
-  second_half @ first_half
+  if n = 0 then []
+  else
+    let mid = n / 2 in
+    let arr = Array.of_list data in
+    let result = Array.init n (fun i ->
+      if i < n - mid then arr.(mid + i)
+      else arr.(i - (n - mid))
+    ) in
+    Array.to_list result
 
 (* Window functions *)
 
@@ -153,34 +158,6 @@ let rectangular_window data = data
 
 (* Filter Bank: Split signal into multiple frequency bands *)
 (* Uses DFT to transform to frequency domain, masks bands, then IDFT back *)
-let filter_bank data num_bands =
-  let n = List.length data in
-  if n = 0 || num_bands <= 0 then []
-  else if num_bands = 1 then [data]
-  else
-    (* Transform to frequency domain *)
-    let freq_domain = dft_transform data in
-    let n_freq = List.length freq_domain / 2 in
-    let band_size = n_freq / num_bands in
-    (* Create each band *)
-    let rec create_band band_idx =
-      if band_idx = num_bands then []
-      else
-        let start_freq = band_idx * band_size in
-        let end_freq = if band_idx = num_bands - 1 then n_freq else (band_idx + 1) * band_size in
-        (* Create masked frequency domain: zero out frequencies outside this band *)
-        let masked_freq = List.mapi
-          (fun i x ->
-            let freq_idx = i / 2 in
-            if freq_idx >= start_freq && freq_idx < end_freq then x
-            else 0.0)
-          freq_domain in
-        (* Transform back to time domain *)
-        let band_signal = idft_transform masked_freq in
-        band_signal :: create_band (band_idx + 1)
-    in
-    create_band 0
-
 (* Filter Bank with custom frequency ranges *)
 (* bands is a list of (start_freq, end_freq) pairs (normalized 0.0-1.0) *)
 let filter_bank_custom data bands =
@@ -196,15 +173,34 @@ let filter_bank_custom data bands =
         let start_freq = int_of_float (start_norm *. float_of_int n_freq) in
         let end_freq = int_of_float (end_norm *. float_of_int n_freq) in
         (* Create masked frequency domain *)
+        (* For real signals, DFT is symmetric: X[k] = X*[N-k] *)
+        (* We need to keep both k and N-k if k is in the band *)
         let masked_freq = List.mapi
           (fun i x ->
             let freq_idx = i / 2 in
-            if freq_idx >= start_freq && freq_idx < end_freq then x
+            (* Check if this frequency is in the band *)
+            let in_band = freq_idx >= start_freq && freq_idx < end_freq in
+            (* Also check if symmetric frequency is in the band (for real signal symmetry) *)
+            let sym_freq = n_freq - freq_idx in
+            let sym_in_band = sym_freq >= start_freq && sym_freq < end_freq in
+            if in_band || (freq_idx > 0 && freq_idx < n_freq && sym_in_band) then x
             else 0.0)
           freq_domain in
         (* Transform back to time domain *)
         idft_transform masked_freq)
       bands
+
+let filter_bank data num_bands =
+  if List.length data = 0 || num_bands <= 0 then []
+  else if num_bands = 1 then [data]
+  else
+    (* Create normalized frequency ranges for each band *)
+    let bands = List.init num_bands (fun i ->
+      let start_norm = float_of_int i /. float_of_int num_bands in
+      let end_norm = float_of_int (i + 1) /. float_of_int num_bands in
+      (start_norm, end_norm)
+    ) in
+    filter_bank_custom data bands
 
 (* SNR: Signal-to-Noise Ratio in dB *)
 (* Calculates SNR between original signal and noisy/reconstructed signal *)
@@ -249,6 +245,7 @@ let haar_transform data =
         in
         let (approximations, details) = process_pairs [] [] signal in
         (* Recursively transform approximations *)
+        (* NOTE: details @ all_details is O(n) per level, total O(n log n) - acceptable *)
         haar_aux approximations (details @ all_details)
     in
     haar_aux data []
@@ -309,8 +306,8 @@ let idwt_haar coefficients =
   if n = 0 then []
   else
     (* For full decomposition, approximation length is always 1 for n >= 1 *)
-    let find_appr_len len = if len = 0 then 0 else 1 in
-    let appr_len = find_appr_len n in
-    let approximations = List.init appr_len (fun i -> List.nth coefficients i) in
-    let details = List.init (n - appr_len) (fun i -> List.nth coefficients (appr_len + i)) in
+    let appr_len = if n = 0 then 0 else 1 in
+    let arr = Array.of_list coefficients in
+    let approximations = Array.to_list (Array.sub arr 0 appr_len) in
+    let details = Array.to_list (Array.sub arr appr_len (n - appr_len)) in
     haar_inverse_transform approximations details
