@@ -9,4 +9,3 @@
 (test
  (name test_pbt)
  (libraries lab2 qcheck alcotest))
-
