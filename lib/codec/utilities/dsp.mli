@@ -5,6 +5,8 @@ val idft_transform : float list -> float list
 val mdct_transform : float list -> float list
 val imdct_transform : float list -> float list
 (* Reference implementations for testing (O(n²)) *)
+val dft_transform_reference : float list -> float list
+val idft_transform_reference : float list -> float list
 val mdct_transform_reference : float list -> float list
 val imdct_transform_reference : float list -> float list
 val fft_shift : float list -> float list

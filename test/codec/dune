@@ -10,7 +10,27 @@
  (name bench_encoder_decoder)
  (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest))
 
+(executable
+ (name bench_mdct)
+ (libraries lab4_mlac.codec.utilities))
+
+(executable
+ (name bench_dft)
+ (libraries lab4_mlac.codec.utilities))
+
 (test
  (name test_mdct_comparison)
  (libraries lab4_mlac.codec.utilities alcotest))
+
+(test
+ (name test_e2e_wav_compression)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
+
+(test
+ (name test_golden_wav)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
+
+(test
+ (name test_e2e_simple)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
 

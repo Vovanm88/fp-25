@@ -10,3 +10,7 @@
  (name test_quantization)
  (libraries lab4_mlac.codec.utilities alcotest))
 
+(test
+ (name test_fft)
+ (libraries lab4_mlac.codec.utilities alcotest))
+

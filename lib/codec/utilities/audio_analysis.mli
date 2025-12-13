@@ -8,5 +8,5 @@ val calculate_envelope : float list -> int -> float list
 
 (* Calculate attack and release times from envelope *)
 (* Returns: (attack_ms, release_ms) *)
-val calculate_attack_release : float list -> int -> float * float
+val calculate_attack_release : float list -> int -> int -> float * float
 

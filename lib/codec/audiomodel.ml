@@ -301,8 +301,9 @@ let segment_track ?(min_segment_length = 512) sample_rate data =
     (* For now, create a single segment covering the entire track *)
     (* In a full implementation, this would analyze the signal and create multiple segments *)
     let window_size = min 1024 (padded_n / 4) in
+    let hop_size = max 1 (window_size / 4) in
     let envelope = Codec_utilities.Audio_analysis.calculate_envelope padded_data window_size in
-    let attack_ms, release_ms = Codec_utilities.Audio_analysis.calculate_attack_release envelope sample_rate in
+    let attack_ms, release_ms = Codec_utilities.Audio_analysis.calculate_attack_release envelope sample_rate hop_size in
     let window_type = determine_window_type attack_ms release_ms in
     
     let segment = {

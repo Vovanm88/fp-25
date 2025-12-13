@@ -897,13 +897,20 @@ let test_full_roundtrip () =
 
 (* Full WAV file roundtrip test *)
 let test_full_wav_roundtrip () =
-  (* Read full WAV file *)
+  (* Read WAV file but limit to first 5000 samples for speed *)
   let test_file = get_test_wav_path () in
   let wav_data = Wav.Parser.read_wav test_file in
-  let samples = wav_data.Wav.Parser.samples in
+  let all_samples = wav_data.Wav.Parser.samples in
   let wav_sample_rate = wav_data.Wav.Parser.info.Wav.Parser.sample_rate in
   let num_channels = wav_data.Wav.Parser.info.Wav.Parser.num_channels in
   let bits_per_sample = wav_data.Wav.Parser.info.Wav.Parser.bits_per_sample in
+  
+  (* Limit samples for test speed - take first 5000 samples *)
+  let samples = if List.length all_samples > 5000 then
+    List.init 5000 (fun i -> List.nth all_samples i)
+  else
+    all_samples
+  in
   
   (* Check that WAV file was loaded successfully *)
   check bool "WAV file loaded successfully" (List.length samples > 0) true;

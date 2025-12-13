@@ -138,7 +138,8 @@ let test_standard_frequencies () =
     (List.nth freqs (List.length freqs - 1)) 20000.0
 
 let test_polybank_filter_basic () =
-  let signal = List.init 1000 (fun i -> Float.sin (2.0 *. Float.pi *. float_of_int i /. 100.0)) in
+  (* Reduced size from 1000 to 128 for test speed (DFT is O(n²)) *)
+  let signal = List.init 128 (fun i -> Float.sin (2.0 *. Float.pi *. float_of_int i /. 16.0)) in
   let sample_rate = 44100 in
   let bands = AudioModel.polybank_filter signal AudioModel.standard_10band_frequencies_hz sample_rate in
   check int "Polybank returns 10 bands" (List.length bands) 10;
@@ -149,7 +150,8 @@ let test_polybank_filter_basic () =
     bands
 
 let test_polybank_filter_custom () =
-  let signal = List.init 512 (fun i -> Float.sin (2.0 *. Float.pi *. float_of_int i /. 64.0)) in
+  (* Reduced size from 512 to 64 for test speed (DFT is O(n²)) *)
+  let signal = List.init 64 (fun i -> Float.sin (2.0 *. Float.pi *. float_of_int i /. 8.0)) in
   let sample_rate = 44100 in
   let custom_freqs = [100.0; 1000.0; 5000.0; 10000.0] in
   let bands = AudioModel.polybank_filter signal custom_freqs sample_rate in

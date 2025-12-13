@@ -1,156 +1,120 @@
 (* Digital Signal Processing utilities *)
 open Complex
 
-(* DFT: Discrete Fourier Transform *)
-(* For real input, we store the real and imaginary parts separately *)
-(* Output format: [re0, im0, re1, im1, ...] for proper roundtrip *)
+(* MDCT Reference: O(n²) - for testing *)
+let mdct_transform_reference data =
+  let n = List.length data in if n = 0 then [] else
+  let arr = Array.of_list data and m = n / 2 and w = Float.pi /. float_of_int n in
+  Array.to_list (Array.init m (fun k ->
+    let s = ref 0.0 in for i = 0 to n-1 do
+      s := !s +. arr.(i) *. Float.cos (w *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5))
+    done; !s))
+
+(* IMDCT Reference: O(n²) - for testing *)
+let imdct_transform_reference data =
+  let m = List.length data in if m = 0 then [] else
+  let arr = Array.of_list data and n = 2 * m and w = Float.pi /. float_of_int (2 * m) in
+  Array.to_list (Array.init n (fun i ->
+    let s = ref 0.0 in for k = 0 to m-1 do
+      s := !s +. arr.(k) *. Float.cos (w *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5))
+    done; !s /. float_of_int m))
+
+(* Fast MDCT: O(n log n) via FFT module *)
+let mdct_transform data =
+  match Fft.mdct_transform_fast data with [] -> mdct_transform_reference data | r -> r
+
+(* Fast IMDCT: O(n log n) via FFT module *)
+let imdct_transform data =
+  match Fft.imdct_transform_fast data with [] -> imdct_transform_reference data | r -> r
+
+(* DFT Reference: O(n²) - for testing *)
+let dft_transform_reference data =
+  let n = List.length data in if n = 0 then [] else
+  let omega = 2. *. Float.pi /. float_of_int n in
+  List.concat_map (fun k ->
+    let sum = List.fold_left (fun acc (i, x) ->
+      let angle = omega *. float_of_int k *. float_of_int i in
+      add acc { re = x *. Float.cos angle; im = -.x *. Float.sin angle }
+    ) zero (List.mapi (fun i x -> (i, x)) data) in
+    [sum.re; sum.im]
+  ) (List.init n Fun.id)
+
+(* IDFT Reference: O(n²) - for testing *)
+let idft_transform_reference data =
+  let n = List.length data / 2 in if n = 0 then [] else
+  let omega = 2. *. Float.pi /. float_of_int n in
+  List.map (fun i ->
+    let sum = List.fold_left (fun acc k ->
+      let re = List.nth data (2*k) and im = List.nth data (2*k+1) in
+      let angle = omega *. float_of_int k *. float_of_int i in
+      add acc { re = re *. Float.cos angle -. im *. Float.sin angle;
+                im = re *. Float.sin angle +. im *. Float.cos angle }
+    ) zero (List.init n Fun.id) in
+    sum.re /. float_of_int n
+  ) (List.init n Fun.id)
+
+(* Fast DFT: O(n log n) via FFT *)
 let dft_transform data =
   let n = List.length data in
   if n = 0 then []
+  else if n = 1 then [List.hd data; 0.0]
   else
-    let omega = 2. *. Float.pi /. float_of_int n in
-    let rec aux k =
-      if k = n then []
-      else
-        let sum = List.fold_left
-          (fun acc (i, x) ->
-            let angle = omega *. float_of_int k *. float_of_int i in
-            let c = { re = x *. Float.cos angle; im = -.x *. Float.sin angle } in
-            add acc c)
-          zero
-          (List.mapi (fun i x -> (i, x)) data) in
-        (* Store both real and imaginary parts for roundtrip *)
-        sum.re :: sum.im :: aux (k + 1)
-    in
-    aux 0
+    (* Find next power of 2 *)
+    let rec next_pow2 x acc = if acc >= x then acc else next_pow2 x (acc * 2) in
+    let n_padded = next_pow2 n 2 in
+    (* Pad with zeros if needed *)
+    let padded = if n_padded > n then
+      data @ List.init (n_padded - n) (fun _ -> 0.0)
+    else data in
+    (* Find nbits *)
+    let rec log2 x acc = if x <= 1 then acc else log2 (x lsr 1) (acc + 1) in
+    let nbits = log2 n_padded 0 in
+    (* Use FFT *)
+    match Fft.fft_init nbits false with
+    | None -> dft_transform_reference data
+    | Some fft_ctx ->
+      let fft_input = Array.of_list (List.map (fun x -> Fft.complex x 0.0) padded) in
+      Fft.fft_calc fft_ctx fft_input;
+      (* Extract first n results and interleave re/im *)
+      List.concat_map (fun i -> 
+        if i < n then [fft_input.(i).re; fft_input.(i).im]
+        else []
+      ) (List.init n_padded Fun.id)
 
-(* IDFT: Inverse Discrete Fourier Transform *)
-(* Input format: [re0, im0, re1, im1, ...] *)
+(* Fast IDFT: O(n log n) via FFT *)
 let idft_transform data =
   let n = List.length data / 2 in
   if n = 0 then []
+  else if n = 1 then [List.nth data 0]
   else
-    let omega = 2. *. Float.pi /. float_of_int n in
-    let rec aux i =
-      if i = n then []
+    (* Find next power of 2 *)
+    let rec next_pow2 x acc = if acc >= x then acc else next_pow2 x (acc * 2) in
+    let n_padded = next_pow2 n 2 in
+    (* Convert interleaved re/im to complex array *)
+    let fft_input = Array.init n_padded (fun i ->
+      if i < n then
+        Fft.complex (List.nth data (2*i)) (List.nth data (2*i+1))
       else
-        let sum = List.fold_left
-          (fun acc k ->
-            let re = List.nth data (2 * k) in
-            let im = List.nth data (2 * k + 1) in
-            let angle = omega *. float_of_int k *. float_of_int i in
-            let c = { re = re *. Float.cos angle -. im *. Float.sin angle;
-                      im = re *. Float.sin angle +. im *. Float.cos angle } in
-            add acc c)
-          zero
-          (List.init n (fun k -> k)) in
-        sum.re /. float_of_int n :: aux (i + 1)
-    in
-    aux 0
-
-(* MDCT: Modified Discrete Cosine Transform - Reference Implementation *)
-(* O(n²) complexity - used for testing and verification *)
-let mdct_transform_reference data =
-  let n = List.length data in
-  if n = 0 then []
-  else
-    let data_array = Array.of_list data in
-    let m = n / 2 in
-    let omega = Float.pi /. float_of_int n in
-    let result = Array.make m 0.0 in
-    (* Compute MDCT coefficients *)
-    for k = 0 to m - 1 do
-      let sum = ref 0.0 in
-      for i = 0 to n - 1 do
-        let angle = omega *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5) in
-        sum := !sum +. data_array.(i) *. Float.cos angle
-      done;
-      result.(k) <- !sum
+        Fft.complex_zero ()
+    ) in
+    (* Conjugate input *)
+    for i = 0 to Array.length fft_input - 1 do
+      let c = fft_input.(i) in
+      fft_input.(i) <- Fft.complex c.re (-.c.im)
     done;
-    Array.to_list result
-
-(* IMDCT: Inverse Modified Discrete Cosine Transform - Reference Implementation *)
-(* O(n²) complexity - used for testing and verification *)
-let imdct_transform_reference data =
-  let m = List.length data in
-  if m = 0 then []
-  else
-    let data_array = Array.of_list data in
-    let n = 2 * m in
-    let omega = Float.pi /. float_of_int n in
-    let result = Array.make n 0.0 in
-    (* Compute IMDCT samples *)
-    for i = 0 to n - 1 do
-      let sum = ref 0.0 in
-      for k = 0 to m - 1 do
-        let angle = omega *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5) in
-        sum := !sum +. data_array.(k) *. Float.cos angle
-      done;
-      result.(i) <- !sum /. float_of_int m
-    done;
-    Array.to_list result
-
-(* Fast MDCT: Modified Discrete Cosine Transform using optimized computation *)
-(* Optimized with precomputed cosine tables for better cache performance *)
-(* Still O(n²) but faster due to better memory locality *)
-(* Uses precomputed cosine tables for small n, direct computation for large n *)
-(* For now, we optimize with precomputed tables - true FFT-based MDCT can be added later *)
-let mdct_transform data =
-  let n = List.length data in
-  if n = 0 then []
-  else
-    let data_array = Array.of_list data in
-    let m = n / 2 in
-    let omega = Float.pi /. float_of_int n in
-    let result = Array.make m 0.0 in
-    
-    (* Optimize: use precomputed cosine table for better cache performance *)
-    (* Precompute all cosine values needed *)
-    let cos_table = Array.make (m * n) 0.0 in
-    for k = 0 to m - 1 do
-      for i = 0 to n - 1 do
-        let angle = omega *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5) in
-        cos_table.(k * n + i) <- Float.cos angle
-      done
-    done;
-    (* Compute MDCT using precomputed table *)
-    for k = 0 to m - 1 do
-      let sum = ref 0.0 in
-      for i = 0 to n - 1 do
-        sum := !sum +. data_array.(i) *. cos_table.(k * n + i)
-      done;
-      result.(k) <- !sum
-    done;
-    Array.to_list result
-
-(* Fast IMDCT: Inverse Modified Discrete Cosine Transform *)
-(* Uses precomputed cosine tables for optimization *)
-let imdct_transform data =
-  let m = List.length data in
-  if m = 0 then []
-  else
-    let n = 2 * m in
-    let data_array = Array.of_list data in
-    let omega = Float.pi /. float_of_int n in
-    let result = Array.make n 0.0 in
-    
-    (* Precompute cosine table *)
-    let cos_table = Array.make (n * m) 0.0 in
-    for i = 0 to n - 1 do
-      for k = 0 to m - 1 do
-        let angle = omega *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5) in
-        cos_table.(i * m + k) <- Float.cos angle
-      done
-    done;
-    (* Compute IMDCT using precomputed table *)
-    for i = 0 to n - 1 do
-      let sum = ref 0.0 in
-      for k = 0 to m - 1 do
-        sum := !sum +. data_array.(k) *. cos_table.(i * m + k)
-      done;
-      result.(i) <- !sum /. float_of_int m
-    done;
-    Array.to_list result
+    (* Apply FFT *)
+    let rec log2 x acc = if x <= 1 then acc else log2 (x lsr 1) (acc + 1) in
+    let nbits = log2 n_padded 0 in
+    match Fft.fft_init nbits false with
+    | None -> idft_transform_reference data
+    | Some fft_ctx ->
+      Fft.fft_calc fft_ctx fft_input;
+      (* Conjugate output and scale *)
+      List.map (fun i ->
+        if i < n then
+          fft_input.(i).re /. float_of_int n_padded
+        else 0.0
+      ) (List.init n Fun.id)
 
 (* FFT Shift: Shift zero frequency to center *)
 let fft_shift data =

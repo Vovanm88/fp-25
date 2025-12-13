@@ -26,7 +26,7 @@ let calculate_envelope data window_size =
     calc [] 0
 
 (* Calculate attack and release times from envelope *)
-let calculate_attack_release envelope sample_rate =
+let calculate_attack_release envelope sample_rate hop_size =
   let n = List.length envelope in
   if n < 2 then (0.0, 0.0)
   else
@@ -66,11 +66,11 @@ let calculate_attack_release envelope sample_rate =
     done;
     
     let attack_time = if !attack_start >= 0 && !attack_end >= 0 then
-      float_of_int (!attack_end - !attack_start) *. 1000.0 /. float_of_int sample_rate
+      float_of_int ((!attack_end - !attack_start) * hop_size) *. 1000.0 /. float_of_int sample_rate
     else 0.0 in
     
     let release_time = if !release_start >= 0 && !release_end >= 0 then
-      float_of_int (!release_start - !release_end) *. 1000.0 /. float_of_int sample_rate
+      float_of_int ((!release_start - !release_end) * hop_size) *. 1000.0 /. float_of_int sample_rate
     else 0.0 in
     
     (max 0.0 attack_time, max 0.0 release_time)
