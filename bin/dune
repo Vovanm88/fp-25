@@ -1,3 +1,4 @@
 (executable
  (public_name lab4_mlac)
- (name main))
+ (name main)
+ (libraries lab4_mlac))

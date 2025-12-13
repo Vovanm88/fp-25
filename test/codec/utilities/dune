@@ -1,0 +1,12 @@
+(test
+ (name test_dsp)
+ (libraries lab4_mlac.codec.utilities alcotest))
+
+(test
+ (name test_compression)
+ (libraries lab4_mlac.codec.utilities alcotest))
+
+(test
+ (name test_quantization)
+ (libraries lab4_mlac.codec.utilities alcotest))
+

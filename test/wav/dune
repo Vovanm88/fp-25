@@ -1,0 +1,4 @@
+(test
+ (name test_wav)
+ (libraries lab4_mlac.wav alcotest))
+

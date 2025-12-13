@@ -1,0 +1,5 @@
+(library
+ (name cli)
+ (public_name lab4_mlac.cli)
+ (modules args))
+

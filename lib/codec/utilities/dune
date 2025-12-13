@@ -1,0 +1,5 @@
+(library
+ (name codec_utilities)
+ (public_name lab4_mlac.codec.utilities)
+ (modules dsp compression quantization audio_analysis))
+

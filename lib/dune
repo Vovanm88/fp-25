@@ -1,0 +1,5 @@
+(library
+ (name lab4_mlac)
+ (public_name lab4_mlac)
+ (libraries lab4_mlac.wav lab4_mlac.io lab4_mlac.cli lab4_mlac.codec))
+

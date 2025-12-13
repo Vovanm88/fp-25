@@ -1,0 +1,4 @@
+(test
+ (name test_reader_writer)
+ (libraries lab4_mlac.io alcotest))
+

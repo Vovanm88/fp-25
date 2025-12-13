@@ -15,4 +15,5 @@
  (bug_reports "https://github.com/Vovanm88/fp-25/issues")
  (depends
   ocaml
-  (ocamlformat :dev)))
+  (ocamlformat :dev)
+  (alcotest :with-test)))

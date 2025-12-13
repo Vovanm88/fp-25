@@ -1,0 +1,16 @@
+(test
+ (name test_audiomodel)
+ (libraries lab4_mlac.codec alcotest))
+
+(test
+ (name test_encoder_decoder)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest))
+
+(executable
+ (name bench_encoder_decoder)
+ (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest))
+
+(test
+ (name test_mdct_comparison)
+ (libraries lab4_mlac.codec.utilities alcotest))
+
