@@ -42,22 +42,27 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
         !last_computed_x
   in
 
-  let process_method method_ points current_point =
+  let process_method method_ points is_lag =
     let method_window_size =
       match method_ with Linear -> 2 | Lagrange | Newton -> window_size
     in
-    let window =
-      if method_window_size = 2 then take 2 (List.rev points) |> List.rev
-      else take method_window_size points
+    let effective_points =
+      if is_lag then take (List.length points - 1) points else points
     in
-    if List.length window < method_window_size then ()
+    if List.length effective_points < method_window_size then ()
     else
+      let window =
+        if method_window_size = 2 then
+          take 2 (List.rev effective_points) |> List.rev
+        else take method_window_size effective_points
+      in
+      let end_point = List.hd (List.rev effective_points) in
       let start_x =
         match get_last_x method_ with
         | None -> (List.hd window).x
         | Some x -> x +. step
       in
-      let end_x = current_point.x in
+      let end_x = end_point.x in
       if start_x <= end_x then (
         let x_values = linspace start_x end_x step in
         List.iter
@@ -78,8 +83,10 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
         | points ->
             let last_point = List.hd (List.rev points) in
             List.iter
+              (fun method_ -> process_method method_ !points_buffer false)
+              methods;
+            List.iter
               (fun method_ ->
-                process_method method_ points last_point;
                 let last_x = get_last_x method_ in
                 (* Only print final point if we've produced interpolated values
                    for this method (i.e. last_x is set) and the last printed x
@@ -102,7 +109,7 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
                start. *)
             ();
             List.iter
-              (fun method_ -> process_method method_ !points_buffer point)
+              (fun method_ -> process_method method_ !points_buffer true)
               methods;
             let max_window_size =
               List.fold_left
@@ -112,9 +119,9 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
                   | Lagrange | Newton -> max acc window_size)
                 0 methods
             in
-            if List.length !points_buffer > max_window_size then
+            if List.length !points_buffer > max_window_size + 1 then
               points_buffer :=
-                List.rev (take max_window_size (List.rev !points_buffer));
+                List.rev (take (max_window_size + 1) (List.rev !points_buffer));
             process_line ())
   in
   process_line ()
