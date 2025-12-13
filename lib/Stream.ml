@@ -54,7 +54,7 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
     else
       let start_x =
         match get_last_x method_ with
-        | None -> (List.hd window).x +. step
+        | None -> (List.hd window).x
         | Some x -> x +. step
       in
       let end_x = current_point.x in
@@ -81,8 +81,12 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
               (fun method_ ->
                 process_method method_ points last_point;
                 let last_x = get_last_x method_ in
+                (* Only print final point if we've produced interpolated values
+                   for this method (i.e. last_x is set) and the last printed x
+                   is different from the final point's x. This avoids printing
+                   the very first point when the window was never full. *)
                 match last_x with
-                | None -> print_point (method_name method_) last_point
+                | None -> ()
                 | Some x ->
                     if abs_float (x -. last_point.x) > 1e-8 then
                       print_point (method_name method_) last_point)
@@ -92,11 +96,11 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
         | None -> process_line ()
         | Some point ->
             points_buffer := !points_buffer @ [ point ];
-            if List.length !points_buffer = 1 then (
-              List.iter
-                (fun method_ -> print_point (method_name method_) point)
-                methods;
-              last_computed_x := List.map (fun m -> (m, Some point.x)) methods);
+            (* Do not print the very first point immediately. Wait until the
+               window for each method is filled and interpolation produces
+               values. This prevents emitting a single dot at the stream
+               start. *)
+            ();
             List.iter
               (fun method_ -> process_method method_ !points_buffer point)
               methods;
