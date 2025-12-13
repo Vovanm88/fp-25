@@ -98,4 +98,5 @@ val read_chunk_from_file : string -> string * int list * int list
 val read_file_header_from_file : string -> string * int * int list
 
 (* Find chunk in file *)
-val find_chunk_in_file : string -> string -> (string * int list * int list) option
+val find_chunk_in_file :
+  string -> string -> (string * int list * int list) option

@@ -1,5 +1,3 @@
-(* WAV file parser *)
-
 type wav_info = {
   sample_rate : int;
   num_channels : int;
@@ -7,10 +5,7 @@ type wav_info = {
   num_samples : int;
 }
 
-type wav_data = {
-  info : wav_info;
-  samples : float list;
-}
+type wav_data = { info : wav_info; samples : float list }
 
 exception Invalid_wav_file of string
 
@@ -19,7 +14,7 @@ let read_int32_le ic =
   let b1 = input_byte ic in
   let b2 = input_byte ic in
   let b3 = input_byte ic in
-  (b0 lor (b1 lsl 8) lor (b2 lsl 16) lor (b3 lsl 24))
+  b0 lor (b1 lsl 8) lor (b2 lsl 16) lor (b3 lsl 24)
 
 let read_int16_le ic =
   let b0 = input_byte ic in
@@ -68,8 +63,10 @@ let read_samples_32bit ic num_samples =
     if remaining = 0 then List.rev acc
     else
       let bits = read_int32_le ic in
-      (* Convert unsigned 32-bit to signed 32-bit *)
-      let sample = if bits land 0x80000000 <> 0 then bits - 0x100000000 else bits in
+
+      let sample =
+        if bits land 0x80000000 <> 0 then bits - 0x100000000 else bits
+      in
       let normalized = float_of_int sample /. 2147483648.0 in
       aux (normalized :: acc) (remaining - 1)
   in
@@ -82,7 +79,7 @@ let read_samples_float32 ic num_samples =
       let bits = read_int32_le ic in
       let sign = if bits land 0x80000000 <> 0 then -1.0 else 1.0 in
       let exponent = ((bits lsr 23) land 0xFF) - 127 in
-      let mantissa = float_of_int (bits land 0x7FFFFF) /. 8388608.0 +. 1.0 in
+      let mantissa = (float_of_int (bits land 0x7FFFFF) /. 8388608.0) +. 1.0 in
       let sample = sign *. mantissa *. (2.0 ** float_of_int exponent) in
       aux (sample :: acc) (remaining - 1)
   in
@@ -94,35 +91,29 @@ let find_chunk ic chunk_id =
     else (
       seek_in ic pos;
       let id = read_string ic 4 in
-      if id = chunk_id then (
+      if id = chunk_id then
         let size = read_int32_le ic in
         Some (pos + 8, size)
-      ) else (
+      else
         let size = read_int32_le ic in
         let next_pos = pos + 8 + size in
-        if size mod 2 <> 0 then search (next_pos + 1) else search next_pos
-      )
-    )
+        if size mod 2 <> 0 then search (next_pos + 1) else search next_pos)
   in
   search 12
 
 let read_wav_info filename =
   let ic = open_in_bin filename in
   try
-    (* Read RIFF header *)
     let riff = read_string ic 4 in
     if riff <> "RIFF" then (
       close_in ic;
-      raise (Invalid_wav_file "Not a RIFF file")
-    );
-    ignore (read_int32_le ic); (* file size *)
+      raise (Invalid_wav_file "Not a RIFF file"));
+    ignore (read_int32_le ic);
     let wave = read_string ic 4 in
     if wave <> "WAVE" then (
       close_in ic;
-      raise (Invalid_wav_file "Not a WAVE file")
-    );
+      raise (Invalid_wav_file "Not a WAVE file"));
 
-    (* Find and read fmt chunk *)
     let fmt_pos_size = find_chunk ic "fmt " in
     match fmt_pos_size with
     | None ->
@@ -133,15 +124,15 @@ let read_wav_info filename =
         let audio_format = read_uint16_le ic in
         if audio_format <> 1 && audio_format <> 3 then (
           close_in ic;
-          raise (Invalid_wav_file ("Unsupported audio format: " ^ string_of_int audio_format))
-        );
+          raise
+            (Invalid_wav_file
+               ("Unsupported audio format: " ^ string_of_int audio_format)));
         let num_channels = read_uint16_le ic in
         let sample_rate = read_int32_le ic in
-        ignore (read_int32_le ic); (* byte rate *)
-        ignore (read_uint16_le ic); (* block align *)
+        ignore (read_int32_le ic);
+        ignore (read_uint16_le ic);
         let bits_per_sample = read_uint16_le ic in
 
-        (* Find data chunk to get num_samples *)
         let num_samples =
           match find_chunk ic "data" with
           | None -> 0
@@ -163,20 +154,16 @@ let read_wav_info filename =
 let read_wav filename =
   let ic = open_in_bin filename in
   try
-    (* Read RIFF header *)
     let riff = read_string ic 4 in
     if riff <> "RIFF" then (
       close_in ic;
-      raise (Invalid_wav_file "Not a RIFF file")
-    );
-    ignore (read_int32_le ic); (* file size *)
+      raise (Invalid_wav_file "Not a RIFF file"));
+    ignore (read_int32_le ic);
     let wave = read_string ic 4 in
     if wave <> "WAVE" then (
       close_in ic;
-      raise (Invalid_wav_file "Not a WAVE file")
-    );
+      raise (Invalid_wav_file "Not a WAVE file"));
 
-    (* Find and read fmt chunk *)
     let fmt_pos_size = find_chunk ic "fmt " in
     let fmt_pos =
       match fmt_pos_size with
@@ -190,15 +177,15 @@ let read_wav filename =
     let audio_format = read_uint16_le ic in
     if audio_format <> 1 && audio_format <> 3 then (
       close_in ic;
-      raise (Invalid_wav_file ("Unsupported audio format: " ^ string_of_int audio_format))
-    );
+      raise
+        (Invalid_wav_file
+           ("Unsupported audio format: " ^ string_of_int audio_format)));
     let num_channels = read_uint16_le ic in
     let sample_rate = read_int32_le ic in
-    ignore (read_int32_le ic); (* byte rate *)
-    ignore (read_uint16_le ic); (* block align *)
+    ignore (read_int32_le ic);
+    ignore (read_uint16_le ic);
     let bits_per_sample = read_uint16_le ic in
 
-    (* Find and read data chunk *)
     let data_pos_size = find_chunk ic "data" in
     let data_pos, data_size =
       match data_pos_size with
@@ -212,7 +199,6 @@ let read_wav filename =
     let bytes_per_sample = bits_per_sample / 8 in
     let num_samples = data_size / bytes_per_sample / num_channels in
 
-    (* Read samples based on format *)
     let samples =
       match (audio_format, bits_per_sample) with
       | 1, 16 -> read_samples_16bit ic (num_samples * num_channels)
@@ -224,13 +210,13 @@ let read_wav filename =
           raise
             (Invalid_wav_file
                ("Unsupported format: audio_format=" ^ string_of_int audio_format
-              ^ ", bits_per_sample=" ^ string_of_int bits_per_sample))
+              ^ ", bits_per_sample="
+               ^ string_of_int bits_per_sample))
     in
 
     close_in ic;
     {
-      info =
-        { sample_rate; num_channels; bits_per_sample; num_samples };
+      info = { sample_rate; num_channels; bits_per_sample; num_samples };
       samples;
     }
   with

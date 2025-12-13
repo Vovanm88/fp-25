@@ -24,11 +24,21 @@
 
 (test
  (name test_e2e_wav_compression)
- (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
+ (libraries
+  lab4_mlac.codec
+  lab4_mlac.codec.utilities
+  lab4_mlac.wav
+  alcotest
+  unix))
 
 (test
  (name test_golden_wav)
- (libraries lab4_mlac.codec lab4_mlac.codec.utilities lab4_mlac.wav alcotest unix))
+ (libraries
+  lab4_mlac.codec
+  lab4_mlac.codec.utilities
+  lab4_mlac.wav
+  alcotest
+  unix))
 
 (executable
  (name convert_wav)

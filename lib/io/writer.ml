@@ -2,33 +2,39 @@
 
 (* Write int32 as little-endian bytes *)
 let write_int32 value =
-  [value land 0xFF;
-   (value lsr 8) land 0xFF;
-   (value lsr 16) land 0xFF;
-   (value lsr 24) land 0xFF]
+  [
+    value land 0xFF;
+    (value lsr 8) land 0xFF;
+    (value lsr 16) land 0xFF;
+    (value lsr 24) land 0xFF;
+  ]
 
 (* Write int16 as little-endian bytes *)
 let write_int16 value =
   let value = if value < 0 then value + 0x10000 else value in
-  [value land 0xFF;
-   (value lsr 8) land 0xFF]
+  [ value land 0xFF; (value lsr 8) land 0xFF ]
 
 (* Write uint8 as single byte *)
 let write_uint8 value =
   if value < 0 || value > 255 then
     failwith ("Invalid uint8 value: " ^ string_of_int value)
-  else
-    [value]
+  else [ value ]
 
 (* Write float as IEEE 754 single precision (32-bit) *)
 let write_float value =
   (* Convert float to 32-bit IEEE 754 representation *)
   let bits = Int32.bits_of_float value in
   let b0 = Int32.to_int (Int32.logand bits 0xFFl) in
-  let b1 = Int32.to_int (Int32.logand (Int32.shift_right_logical bits 8) 0xFFl) in
-  let b2 = Int32.to_int (Int32.logand (Int32.shift_right_logical bits 16) 0xFFl) in
-  let b3 = Int32.to_int (Int32.logand (Int32.shift_right_logical bits 24) 0xFFl) in
-  [b0; b1; b2; b3]
+  let b1 =
+    Int32.to_int (Int32.logand (Int32.shift_right_logical bits 8) 0xFFl)
+  in
+  let b2 =
+    Int32.to_int (Int32.logand (Int32.shift_right_logical bits 16) 0xFFl)
+  in
+  let b3 =
+    Int32.to_int (Int32.logand (Int32.shift_right_logical bits 24) 0xFFl)
+  in
+  [ b0; b1; b2; b3 ]
 
 (* Write string as length (int32) + bytes *)
 let write_string s =
@@ -42,10 +48,13 @@ let write_list_int32 lst =
   let len_bytes = write_int32 len in
   let arr = Array.of_list lst in
   (* Build bytes in correct order using fold_right *)
-  let data_bytes = Array.fold_right (fun value acc -> 
-    let bytes = write_int32 value in
-    bytes @ acc
-  ) arr [] in
+  let data_bytes =
+    Array.fold_right
+      (fun value acc ->
+        let bytes = write_int32 value in
+        bytes @ acc)
+      arr []
+  in
   len_bytes @ data_bytes
 
 (* Write list of float - optimized: build in reverse, then reverse once *)
@@ -54,10 +63,13 @@ let write_list_float lst =
   let len_bytes = write_int32 len in
   let arr = Array.of_list lst in
   (* Build bytes in correct order using fold_right *)
-  let data_bytes = Array.fold_right (fun value acc -> 
-    let bytes = write_float value in
-    bytes @ acc
-  ) arr [] in
+  let data_bytes =
+    Array.fold_right
+      (fun value acc ->
+        let bytes = write_float value in
+        bytes @ acc)
+      arr []
+  in
   len_bytes @ data_bytes
 
 (* Write list of uint8 - optimized: direct conversion *)
@@ -74,8 +86,7 @@ let write_bytes_to_file filename bytes =
     let arr = Array.of_list bytes in
     Array.iter (output_byte oc) arr;
     close_out oc
-  with
-  | e ->
+  with e ->
     close_out oc;
     raise e
 
@@ -108,8 +119,7 @@ let write_list_float_to_file filename lst =
   write_bytes_to_file filename (write_list_float lst)
 
 (* Write arbitrary bytes list to file *)
-let write_to_file filename bytes =
-  write_bytes_to_file filename bytes
+let write_to_file filename bytes = write_bytes_to_file filename bytes
 
 (* Chunk structure: ID (4 bytes) + Size (int32) + Data *)
 (* Write chunk header: ID (4-byte string) + Size (int32) *)
@@ -141,4 +151,3 @@ let write_file_header magic version =
 (* Write file header to file *)
 let write_file_header_to_file filename magic version =
   write_bytes_to_file filename (write_file_header magic version)
-

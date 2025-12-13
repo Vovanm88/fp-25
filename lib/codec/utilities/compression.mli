@@ -23,4 +23,3 @@ val serialize_tree : huffman_tree -> int list
 (* Deserialize Huffman tree from bytes *)
 (* Returns (tree, remaining_bytes) *)
 val deserialize_tree : int list -> huffman_tree * int list
-

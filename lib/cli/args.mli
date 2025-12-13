@@ -11,8 +11,8 @@ type args = {
 
 exception Invalid_args of string
 
-(** Parse command line arguments *)
 val parse_args : unit -> args
+(** Parse command line arguments *)
 
-(** Print usage information *)
 val print_usage : unit -> unit
+(** Print usage information *)

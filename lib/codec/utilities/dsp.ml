@@ -3,69 +3,117 @@ open Complex
 
 (* MDCT Reference: O(n²) - for testing *)
 let mdct_transform_reference data =
-  let n = List.length data in if n = 0 then [] else
-  let arr = Array.of_list data and m = n / 2 and w = Float.pi /. float_of_int n in
-  Array.to_list (Array.init m (fun k ->
-    let s = ref 0.0 in for i = 0 to n-1 do
-      s := !s +. arr.(i) *. Float.cos (w *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5))
-    done; !s))
+  let n = List.length data in
+  if n = 0 then []
+  else
+    let arr = Array.of_list data
+    and m = n / 2
+    and w = Float.pi /. float_of_int n in
+    Array.to_list
+      (Array.init m (fun k ->
+           let s = ref 0.0 in
+           for i = 0 to n - 1 do
+             s :=
+               !s
+               +. arr.(i)
+                  *. Float.cos
+                       (w
+                       *. (float_of_int i +. 0.5 +. float_of_int m)
+                       *. (float_of_int k +. 0.5))
+           done;
+           !s))
 
 (* IMDCT Reference: O(n²) - for testing *)
 let imdct_transform_reference data =
-  let m = List.length data in if m = 0 then [] else
-  let arr = Array.of_list data and n = 2 * m and w = Float.pi /. float_of_int (2 * m) in
-  Array.to_list (Array.init n (fun i ->
-    let s = ref 0.0 in for k = 0 to m-1 do
-      s := !s +. arr.(k) *. Float.cos (w *. (float_of_int i +. 0.5 +. float_of_int m) *. (float_of_int k +. 0.5))
-    done; !s /. float_of_int m))
+  let m = List.length data in
+  if m = 0 then []
+  else
+    let arr = Array.of_list data
+    and n = 2 * m
+    and w = Float.pi /. float_of_int (2 * m) in
+    Array.to_list
+      (Array.init n (fun i ->
+           let s = ref 0.0 in
+           for k = 0 to m - 1 do
+             s :=
+               !s
+               +. arr.(k)
+                  *. Float.cos
+                       (w
+                       *. (float_of_int i +. 0.5 +. float_of_int m)
+                       *. (float_of_int k +. 0.5))
+           done;
+           !s /. float_of_int m))
 
 (* Fast MDCT: O(n log n) via FFT module *)
 let mdct_transform data =
-  match Fft.mdct_transform_fast data with [] -> mdct_transform_reference data | r -> r
+  match Fft.mdct_transform_fast data with
+  | [] -> mdct_transform_reference data
+  | r -> r
 
 (* Fast IMDCT: O(n log n) via FFT module *)
 let imdct_transform data =
-  match Fft.imdct_transform_fast data with [] -> imdct_transform_reference data | r -> r
+  match Fft.imdct_transform_fast data with
+  | [] -> imdct_transform_reference data
+  | r -> r
 
 (* DFT Reference: O(n²) - for testing *)
 let dft_transform_reference data =
-  let n = List.length data in if n = 0 then [] else
-  let omega = 2. *. Float.pi /. float_of_int n in
-  List.concat_map (fun k ->
-    let sum = List.fold_left (fun acc (i, x) ->
-      let angle = omega *. float_of_int k *. float_of_int i in
-      add acc { re = x *. Float.cos angle; im = -.x *. Float.sin angle }
-    ) zero (List.mapi (fun i x -> (i, x)) data) in
-    [sum.re; sum.im]
-  ) (List.init n Fun.id)
+  let n = List.length data in
+  if n = 0 then []
+  else
+    let omega = 2. *. Float.pi /. float_of_int n in
+    List.concat_map
+      (fun k ->
+        let sum =
+          List.fold_left
+            (fun acc (i, x) ->
+              let angle = omega *. float_of_int k *. float_of_int i in
+              add acc { re = x *. Float.cos angle; im = -.x *. Float.sin angle })
+            zero
+            (List.mapi (fun i x -> (i, x)) data)
+        in
+        [ sum.re; sum.im ])
+      (List.init n Fun.id)
 
 (* IDFT Reference: O(n²) - for testing *)
 let idft_transform_reference data =
-  let n = List.length data / 2 in if n = 0 then [] else
-  let omega = 2. *. Float.pi /. float_of_int n in
-  List.map (fun i ->
-    let sum = List.fold_left (fun acc k ->
-      let re = List.nth data (2*k) and im = List.nth data (2*k+1) in
-      let angle = omega *. float_of_int k *. float_of_int i in
-      add acc { re = re *. Float.cos angle -. im *. Float.sin angle;
-                im = re *. Float.sin angle +. im *. Float.cos angle }
-    ) zero (List.init n Fun.id) in
-    sum.re /. float_of_int n
-  ) (List.init n Fun.id)
+  let n = List.length data / 2 in
+  if n = 0 then []
+  else
+    let omega = 2. *. Float.pi /. float_of_int n in
+    List.map
+      (fun i ->
+        let sum =
+          List.fold_left
+            (fun acc k ->
+              let re = List.nth data (2 * k)
+              and im = List.nth data ((2 * k) + 1) in
+              let angle = omega *. float_of_int k *. float_of_int i in
+              add acc
+                {
+                  re = (re *. Float.cos angle) -. (im *. Float.sin angle);
+                  im = (re *. Float.sin angle) +. (im *. Float.cos angle);
+                })
+            zero (List.init n Fun.id)
+        in
+        sum.re /. float_of_int n)
+      (List.init n Fun.id)
 
 (* Fast DFT: O(n log n) via FFT *)
 let dft_transform data =
   let n = List.length data in
   if n = 0 then []
-  else if n = 1 then [List.hd data; 0.0]
+  else if n = 1 then [ List.hd data; 0.0 ]
   else
     (* Find next power of 2 *)
     let rec next_pow2 x acc = if acc >= x then acc else next_pow2 x (acc * 2) in
     let n_padded = next_pow2 n 2 in
     (* Pad with zeros if needed *)
-    let padded = if n_padded > n then
-      data @ List.init (n_padded - n) (fun _ -> 0.0)
-    else data in
+    let padded =
+      if n_padded > n then data @ List.init (n_padded - n) (fun _ -> 0.0)
+      else data
+    in
     (* Find nbits *)
     let rec log2 x acc = if x <= 1 then acc else log2 (x lsr 1) (acc + 1) in
     let nbits = log2 n_padded 0 in
@@ -73,30 +121,32 @@ let dft_transform data =
     match Fft.fft_init nbits false with
     | None -> dft_transform_reference data
     | Some fft_ctx ->
-      let fft_input = Array.of_list (List.map (fun x -> Fft.complex x 0.0) padded) in
-      Fft.fft_calc fft_ctx fft_input;
-      (* Extract first n results and interleave re/im *)
-      List.concat_map (fun i -> 
-        if i < n then [fft_input.(i).re; fft_input.(i).im]
-        else []
-      ) (List.init n_padded Fun.id)
+        let fft_input =
+          Array.of_list (List.map (fun x -> Fft.complex x 0.0) padded)
+        in
+        Fft.fft_calc fft_ctx fft_input;
+        (* Extract first n results and interleave re/im *)
+        List.concat_map
+          (fun i ->
+            if i < n then [ fft_input.(i).re; fft_input.(i).im ] else [])
+          (List.init n_padded Fun.id)
 
 (* Fast IDFT: O(n log n) via FFT *)
 let idft_transform data =
   let n = List.length data / 2 in
   if n = 0 then []
-  else if n = 1 then [List.nth data 0]
+  else if n = 1 then [ List.nth data 0 ]
   else
     (* Find next power of 2 *)
     let rec next_pow2 x acc = if acc >= x then acc else next_pow2 x (acc * 2) in
     let n_padded = next_pow2 n 2 in
     (* Convert interleaved re/im to complex array *)
-    let fft_input = Array.init n_padded (fun i ->
-      if i < n then
-        Fft.complex (List.nth data (2*i)) (List.nth data (2*i+1))
-      else
-        Fft.complex_zero ()
-    ) in
+    let fft_input =
+      Array.init n_padded (fun i ->
+          if i < n then
+            Fft.complex (List.nth data (2 * i)) (List.nth data ((2 * i) + 1))
+          else Fft.complex_zero ())
+    in
     (* Conjugate input *)
     for i = 0 to Array.length fft_input - 1 do
       let c = fft_input.(i) in
@@ -108,13 +158,12 @@ let idft_transform data =
     match Fft.fft_init nbits false with
     | None -> idft_transform_reference data
     | Some fft_ctx ->
-      Fft.fft_calc fft_ctx fft_input;
-      (* Conjugate output and scale *)
-      List.map (fun i ->
-        if i < n then
-          fft_input.(i).re /. float_of_int n_padded
-        else 0.0
-      ) (List.init n Fun.id)
+        Fft.fft_calc fft_ctx fft_input;
+        (* Conjugate output and scale *)
+        List.map
+          (fun i ->
+            if i < n then fft_input.(i).re /. float_of_int n_padded else 0.0)
+          (List.init n Fun.id)
 
 (* FFT Shift: Shift zero frequency to center *)
 let fft_shift data =
@@ -123,10 +172,10 @@ let fft_shift data =
   else
     let mid = n / 2 in
     let arr = Array.of_list data in
-    let result = Array.init n (fun i ->
-      if i < n - mid then arr.(mid + i)
-      else arr.(i - (n - mid))
-    ) in
+    let result =
+      Array.init n (fun i ->
+          if i < n - mid then arr.(mid + i) else arr.(i - (n - mid)))
+    in
     Array.to_list result
 
 (* Window functions *)
@@ -138,7 +187,12 @@ let hamming_window data =
   else
     List.mapi
       (fun i x ->
-        let w = 0.54 -. 0.46 *. Float.cos (2. *. Float.pi *. float_of_int i /. float_of_int (n - 1)) in
+        let w =
+          0.54
+          -. 0.46
+             *. Float.cos
+                  (2. *. Float.pi *. float_of_int i /. float_of_int (n - 1))
+        in
         x *. w)
       data
 
@@ -149,7 +203,12 @@ let hanning_window data =
   else
     List.mapi
       (fun i x ->
-        let w = 0.5 *. (1. -. Float.cos (2. *. Float.pi *. float_of_int i /. float_of_int (n - 1))) in
+        let w =
+          0.5
+          *. (1.
+             -. Float.cos
+                  (2. *. Float.pi *. float_of_int i /. float_of_int (n - 1)))
+        in
         x *. w)
       data
 
@@ -175,31 +234,35 @@ let filter_bank_custom data bands =
         (* Create masked frequency domain *)
         (* For real signals, DFT is symmetric: X[k] = X*[N-k] *)
         (* We need to keep both k and N-k if k is in the band *)
-        let masked_freq = List.mapi
-          (fun i x ->
-            let freq_idx = i / 2 in
-            (* Check if this frequency is in the band *)
-            let in_band = freq_idx >= start_freq && freq_idx < end_freq in
-            (* Also check if symmetric frequency is in the band (for real signal symmetry) *)
-            let sym_freq = n_freq - freq_idx in
-            let sym_in_band = sym_freq >= start_freq && sym_freq < end_freq in
-            if in_band || (freq_idx > 0 && freq_idx < n_freq && sym_in_band) then x
-            else 0.0)
-          freq_domain in
+        let masked_freq =
+          List.mapi
+            (fun i x ->
+              let freq_idx = i / 2 in
+              (* Check if this frequency is in the band *)
+              let in_band = freq_idx >= start_freq && freq_idx < end_freq in
+              (* Also check if symmetric frequency is in the band (for real signal symmetry) *)
+              let sym_freq = n_freq - freq_idx in
+              let sym_in_band = sym_freq >= start_freq && sym_freq < end_freq in
+              if in_band || (freq_idx > 0 && freq_idx < n_freq && sym_in_band)
+              then x
+              else 0.0)
+            freq_domain
+        in
         (* Transform back to time domain *)
         idft_transform masked_freq)
       bands
 
 let filter_bank data num_bands =
   if List.length data = 0 || num_bands <= 0 then []
-  else if num_bands = 1 then [data]
+  else if num_bands = 1 then [ data ]
   else
     (* Create normalized frequency ranges for each band *)
-    let bands = List.init num_bands (fun i ->
-      let start_norm = float_of_int i /. float_of_int num_bands in
-      let end_norm = float_of_int (i + 1) /. float_of_int num_bands in
-      (start_norm, end_norm)
-    ) in
+    let bands =
+      List.init num_bands (fun i ->
+          let start_norm = float_of_int i /. float_of_int num_bands in
+          let end_norm = float_of_int (i + 1) /. float_of_int num_bands in
+          (start_norm, end_norm))
+    in
     filter_bank_custom data bands
 
 (* SNR: Signal-to-Noise Ratio in dB *)
@@ -210,12 +273,13 @@ let snr original noisy =
   else
     (* Optimize: calculate both signal_power and noise_power in a single pass *)
     (* This avoids traversing the lists twice *)
-    let (signal_power, noise_power) = List.fold_left2
-      (fun (sig_acc, noise_acc) orig nois -> 
-        let diff = orig -. nois in
-        (sig_acc +. orig *. orig, noise_acc +. diff *. diff))
-      (0.0, 0.0)
-      original noisy in
+    let signal_power, noise_power =
+      List.fold_left2
+        (fun (sig_acc, noise_acc) orig nois ->
+          let diff = orig -. nois in
+          (sig_acc +. (orig *. orig), noise_acc +. (diff *. diff)))
+        (0.0, 0.0) original noisy
+    in
     if noise_power = 0.0 then infinity
     else if signal_power = 0.0 then neg_infinity
     else
@@ -237,13 +301,13 @@ let haar_transform data =
         (* Process pairs: (x[0], x[1]), (x[2], x[3]), ... *)
         let rec process_pairs acc_appr acc_detail = function
           | [] -> (List.rev acc_appr, List.rev acc_detail)
-          | [x] -> (List.rev (x :: acc_appr), List.rev acc_detail)
+          | [ x ] -> (List.rev (x :: acc_appr), List.rev acc_detail)
           | x :: y :: rest ->
-            let appr = (x +. y) /. 2.0 in
-            let detail = (x -. y) /. 2.0 in
-            process_pairs (appr :: acc_appr) (detail :: acc_detail) rest
+              let appr = (x +. y) /. 2.0 in
+              let detail = (x -. y) /. 2.0 in
+              process_pairs (appr :: acc_appr) (detail :: acc_detail) rest
         in
-        let (approximations, details) = process_pairs [] [] signal in
+        let approximations, details = process_pairs [] [] signal in
         (* Recursively transform approximations *)
         (* NOTE: details @ all_details is O(n) per level, total O(n log n) - acceptable *)
         haar_aux approximations (details @ all_details)
@@ -268,26 +332,26 @@ let haar_inverse_transform approximations details =
         | x :: rest when n > 0 -> split_list (n - 1) (x :: acc) rest
         | rest -> (List.rev acc, rest)
       in
-      let (current_details, remaining_details) = 
+      let current_details, remaining_details =
         if List.length detail_list >= current_level_size then
           split_list current_level_size [] detail_list
-        else
-          (detail_list, [])
+        else (detail_list, [])
       in
       (* Reconstruct signal from approximations and details *)
       (* For each pair (a, d): reconstruct (a+d, a-d) *)
-      let reconstructed = List.fold_right2
-        (fun a d acc ->
-          let first = a +. d in
-          let second = a -. d in
-          first :: second :: acc)
-        appr current_details [] in
+      let reconstructed =
+        List.fold_right2
+          (fun a d acc ->
+            let first = a +. d in
+            let second = a -. d in
+            first :: second :: acc)
+          appr current_details []
+      in
       let rec_reconstructed = reconstructed in
       (* If we have remaining details, continue inverse transform *)
       if List.length remaining_details > 0 then
         haar_inverse_aux rec_reconstructed remaining_details
-      else
-        rec_reconstructed
+      else rec_reconstructed
   in
   haar_inverse_aux approximations details
 
@@ -295,7 +359,7 @@ let haar_inverse_transform approximations details =
 (* Returns full decomposition: [a_n, d_n, d_{n-1}, ..., d_1] *)
 (* where a_n is the final approximation and d_i are detail coefficients at level i *)
 let dwt_haar data =
-  let (approximations, details) = haar_transform data in
+  let approximations, details = haar_transform data in
   approximations @ details
 
 (* Inverse Discrete Wavelet Transform using Haar wavelets *)

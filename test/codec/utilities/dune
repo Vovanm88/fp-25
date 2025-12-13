@@ -13,4 +13,3 @@
 (test
  (name test_fft)
  (libraries lab4_mlac.codec.utilities alcotest))
-

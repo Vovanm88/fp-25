@@ -1,10 +1,6 @@
 (* WAV file writer *)
 
-type wav_info = {
-  sample_rate : int;
-  num_channels : int;
-  bits_per_sample : int;
-}
+type wav_info = { sample_rate : int; num_channels : int; bits_per_sample : int }
 
 let write_int32_le oc value =
   output_byte oc (value land 0xFF);
@@ -21,8 +17,7 @@ let write_uint16_le oc value =
   output_byte oc (value land 0xFF);
   output_byte oc ((value lsr 8) land 0xFF)
 
-let write_string oc s =
-  output_string oc s
+let write_string oc s = output_string oc s
 
 let clamp_sample sample =
   if sample < -1.0 then -1.0 else if sample > 1.0 then 1.0 else sample
@@ -90,7 +85,6 @@ let write_wav filename info samples =
     List.iter (write_sample oc) samples;
 
     close_out oc
-  with
-  | e ->
-      close_out oc;
-      raise e
+  with e ->
+    close_out oc;
+    raise e

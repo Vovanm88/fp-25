@@ -11,7 +11,14 @@ val decompress_track : float list -> float -> float -> float list
 (* min_mid, max_mid: original range for mid channel *)
 (* min_side, max_side: original range for side channel *)
 (* Returns: (decompressed_mid, decompressed_side) *)
-val decompress_stereo_tracks : float list -> float list -> float -> float -> float -> float -> float list * float list
+val decompress_stereo_tracks :
+  float list ->
+  float list ->
+  float ->
+  float ->
+  float ->
+  float ->
+  float list * float list
 
 (* Convert Mid-Side to LR (skip if mono) *)
 (* mid: mid channel, side: side channel *)
@@ -42,7 +49,8 @@ val apply_imdct_level2 : Audiomodel.segment list -> Audiomodel.segment list
 (* Apply MDCT Level 1 to each time-domain band (reverse of IMDCT bands) *)
 (* segments: list of segments with time-domain bands in raw_data *)
 (* Returns: list of segments with first-level MDCT coefficients per band *)
-val apply_mdct_level1_to_bands : Audiomodel.segment list -> Audiomodel.segment list
+val apply_mdct_level1_to_bands :
+  Audiomodel.segment list -> Audiomodel.segment list
 
 (* Merge frequency bands back into single MDCT coefficient array *)
 (* segments: list of segments with MDCT coefficients per band in raw_data *)
@@ -57,7 +65,8 @@ val apply_imdct_final : Audiomodel.segment list -> Audiomodel.segment list
 (* Read AudioFile structure and extract segments *)
 (* audio_file: AudioFile structure *)
 (* Returns: (segments, sample_rate, compression_params, original_length) *)
-val read_audio_file : Audiomodel.audio_file -> 
+val read_audio_file :
+  Audiomodel.audio_file ->
   Audiomodel.segment list * int * (float * float) option * int option
 
 (* Decode audio from file and reconstruct signal *)

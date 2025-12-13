@@ -42,4 +42,3 @@ val imdct_half : mdct_context -> float array -> float array
 (* Convenience wrappers for list interface *)
 val mdct_transform_fast : float list -> float list
 val imdct_transform_fast : float list -> float list
-

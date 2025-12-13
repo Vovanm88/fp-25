@@ -1,5 +1,3 @@
-(* Lab 4: Audio Codec implementation *)
-
 module Args = Cli.Args
 module Parser = Wav.Parser
 module Writer = Wav.Writer
@@ -9,55 +7,43 @@ module Decoder = Codec.Decoder
 let () =
   try
     let args = Args.parse_args () in
-    
+
     match args.mode with
     | Args.Encode ->
         Printf.printf "Encoding %s to %s...\n" args.input_file args.output_file;
         Printf.printf "Quality: %.1f dB SNR\n" args.snr_threshold_db;
         flush stdout;
-        
-        (* Read WAV file *)
+
         let wav_data = Parser.read_wav args.input_file in
         Printf.printf "Input: %d Hz, %d channels, %d bits/sample, %d samples\n"
-          wav_data.info.sample_rate
-          wav_data.info.num_channels
-          wav_data.info.bits_per_sample
-          wav_data.info.num_samples;
+          wav_data.info.sample_rate wav_data.info.num_channels
+          wav_data.info.bits_per_sample wav_data.info.num_samples;
         flush stdout;
-        
-        (* Encode to MLAC *)
-        let _audio_file = Encoder.encode_to_file 
-          ~snr_threshold_db:args.snr_threshold_db
-          wav_data.samples 
-          wav_data.info.sample_rate 
-          args.output_file 
+
+        let _audio_file =
+          Encoder.encode_to_file ~snr_threshold_db:args.snr_threshold_db
+            wav_data.samples wav_data.info.sample_rate args.output_file
         in
-        
+
         Printf.printf "Successfully encoded to %s\n" args.output_file;
         flush stdout
-    
     | Args.Decode ->
         Printf.printf "Decoding %s to %s...\n" args.input_file args.output_file;
         flush stdout;
-        
-        (* Decode from MLAC *)
+
         let samples, sample_rate = Decoder.decode_from_file args.input_file in
-        Printf.printf "Decoded: %d Hz, %d samples\n" sample_rate (List.length samples);
+        Printf.printf "Decoded: %d Hz, %d samples\n" sample_rate
+          (List.length samples);
         flush stdout;
-        
-        (* Write WAV file *)
-        (* Assume 16-bit mono for now - could be improved by storing this in MLAC *)
-        let wav_info = {
-          Writer.sample_rate = sample_rate;
-          num_channels = 1; (* Will be determined from actual data if needed *)
-          bits_per_sample = 16;
-        } in
-        
+
+        let wav_info =
+          { Writer.sample_rate; num_channels = 1; bits_per_sample = 16 }
+        in
+
         Writer.write_wav args.output_file wav_info samples;
-        
+
         Printf.printf "Successfully decoded to %s\n" args.output_file;
         flush stdout
-
   with
   | Args.Invalid_args msg ->
       Printf.eprintf "Error: %s\n" msg;

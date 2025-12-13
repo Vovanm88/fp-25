@@ -3,4 +3,3 @@
  (public_name lab4_mlac.codec)
  (modules encoder decoder audiomodel serialization)
  (libraries lab4_mlac.codec.utilities lab4_mlac.io))
-
