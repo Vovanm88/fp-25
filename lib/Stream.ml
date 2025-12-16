@@ -57,10 +57,8 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
       let n = method_window_size in
       let half_n = n / 2 in
       let ideal_start, ideal_end =
-        if n mod 2 = 0 then
-          (center_idx - (half_n - 1), center_idx + half_n)
-        else
-          (center_idx - half_n, center_idx + half_n)
+        if n mod 2 = 0 then (center_idx - (half_n - 1), center_idx + half_n)
+        else (center_idx - half_n, center_idx + half_n)
       in
       (* Есть 8 вариантов:
       1. Не EOF и центрированное окно
@@ -73,19 +71,22 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
       8. EOF и справа и слева не хватает точек
       *)
       (* отсекаем варианты где нет EOF и справа не хватает точек, 2, 4*)
-      if not is_eof && (ideal_end >= List.length points || List.length points < n) then None 
+      if
+        (not is_eof)
+        && (ideal_end >= List.length points || List.length points < n)
+      then None
       else
         let window_start_idx, window_end_idx =
           (* вариант где всего хватает, 1 и 5*)
           if ideal_start >= 0 && ideal_end < List.length points then
             (ideal_start, ideal_end)
-          (* вариант где справа не хватает точек, тут EOF так что берем что есть, 6 и 8*)
+            (* вариант где справа не хватает точек, тут EOF так что берем что есть, 6 и 8*)
           else if ideal_end >= List.length points then
-              (max 0 (List.length points - n), List.length points - 1)
+            (max 0 (List.length points - n), List.length points - 1)
           else
             (* варианты где слева не хватает точек, 3 и 7*)
             (0, min (List.length points - 1) (n - 1))
-          in 
+        in
         (* Убеждаемся, что окно имеет правильный размер *)
         let final_start_idx, final_end_idx =
           let actual_size = window_end_idx - window_start_idx + 1 in
@@ -127,17 +128,12 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
       let start_x = first_point.x in
       let end_x = last_point.x in
 
-      
       let process_start_x =
-        match get_last_x method_ with
-        | None -> start_x
-        | Some x -> x +. step
+        match get_last_x method_ with None -> start_x | Some x -> x +. step
       in
 
-      
       let interpolation_x_values = linspace process_start_x end_x step in
 
-      
       List.iter
         (fun x_i ->
           match select_window x_i points method_window_size is_eof with
@@ -162,7 +158,8 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
     | exception End_of_file ->
         if !points_buffer <> [] then
           List.iter
-            (fun method_ -> process_interpolation_points method_ !points_buffer true)
+            (fun method_ ->
+              process_interpolation_points method_ !points_buffer true)
             methods
     | line -> (
         match parse_line line with
@@ -170,7 +167,8 @@ let process_stream ~methods ~step ~window_size ~parse_line ~print_point =
         | Some point ->
             points_buffer := !points_buffer @ [ point ];
             List.iter
-              (fun method_ -> process_interpolation_points method_ !points_buffer false)
+              (fun method_ ->
+                process_interpolation_points method_ !points_buffer false)
               methods;
             process_line ())
   in
