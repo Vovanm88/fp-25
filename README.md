@@ -338,30 +338,30 @@ linear: 2 2
 
 ```bash
 $ dune exec -- lab3 --newton -n 4 --step 0.5
->0 0
->1 1
->2 2 
+0 0                                 
+1 1
+2 2
 >3 3
->4 4
 newton: 0 0
 newton: 0.5 0.5
 newton: 1 1
 newton: 1.5 1.5
+>4 4
 newton: 2 2
 newton: 2.5 2.5
-newton: 3 3
 >5 5
+newton: 3 3
 newton: 3.5 3.5
-newton: 4 4
 >7 7
+newton: 4 4
 newton: 4.5 4.5
-newton: 5 5
 >9 9
+newton: 5 5
 newton: 5.5 5.5
 newton: 6 6
 newton: 6.5 6.5
-newton: 7 7
 >EOF
+newton: 7 7
 newton: 7.5 7.5
 newton: 8 8
 newton: 8.5 8.5
@@ -371,21 +371,57 @@ newton: 9 9
 #### Пример 3: Несколько методов одновременно
 
 ```bash
-$ dune exec -- lab3 --newton --linear -n 3 --step 0.5
->0 0
+$ dune exec -- lab3 --newton --linear -n 4 --step 0.5
+>0 0                                 
 >1 1
->2 4
 linear: 0 0
 linear: 0.5 0.5
-linear: 1 1  
->EOF
-linear: 1.5 2.5
-linear: 2 4
+>2 2
+linear: 1 1
+linear: 1.5 1.5
+>3 3
+linear: 2 2
+linear: 2.5 2.5
 newton: 0 0
-newton: 0.5 0.25
+newton: 0.5 0.5
 newton: 1 1
-newton: 1.5 2.25
-newton: 2 4
+newton: 1.5 1.5
+>5 5
+linear: 3 3
+linear: 3.5 3.5
+linear: 4 4
+linear: 4.5 4.5
+newton: 2 2
+newton: 2.5 2.5
+>7 7
+linear: 5 5
+linear: 5.5 5.5
+linear: 6 6
+linear: 6.5 6.5
+newton: 3 3
+newton: 3.5 3.5
+newton: 4 4
+newton: 4.5 4.5
+>10 10
+linear: 7 7
+linear: 7.5 7.5
+linear: 8 8
+linear: 8.5 8.5
+linear: 9 9
+linear: 9.5 9.5
+newton: 5 5
+newton: 5.5 5.5
+newton: 6 6
+newton: 6.5 6.5
+>EOF
+linear: 10 10
+newton: 7 7
+newton: 7.5 7.5
+newton: 8 8
+newton: 8.5 8.5
+newton: 9 9
+newton: 9.5 9.5
+newton: 10 10
 ```
 
 #### Пример 4: Работа с файлом
